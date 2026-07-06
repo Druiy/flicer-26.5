@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      line-height: 1.6;
+    }
+
+    .team-container {
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .team-member {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out forwards;
+    }
+
+    .team-member:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .team-member:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    .team-member:last-child {
+      border-bottom: none;
+    }
+
+    .member-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-right: 30px;
+      transition: transform 0.5s ease-in-out;
+    }
+
+    .member-avatar:hover {
+      transform: scale(1.1);
+    }
+
+    .member-info h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .member-info p {
+      color: #666;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="team-container">
+    <h1>制作人信息</h1>
+    <div class="team-member">
+      <img src="sc.png" alt="1" class="member-avatar">
+      <div class="member-info">
+        <h2>Druiy</h2>
+        <p></p >
+        <p>明媚</>
+      </div>
+    </div>
+    
+    
+    
+ <div class="team-member">
+      <img src="gjd.jpg" alt="2" class="member-avatar">
+      <div class="member-info">
+        <h2>。</h2>
+        <p></p >
+        <p>前进</>
+      </div>
+    </div>
+    
+    
+    
+    
+     <div class="team-member">
+    
+      <div class="member-info">
+        <h2>测试信息</h2>
+        <p>测试设备:①OnePlus Pad(OPD2407)</p><p>分辨率:2000*2800</p >
+        <p>测试设备:②OnePlus Ace 3 Pro(PJX110)</p><p>分辨率:1264*2780</p >
+<p>测试设备:③OPPO Reno 10 5G(PHW110)</p><p>分辨率:1080*2412</p >
+
+<p>测试设备:④iPhone 15 Pro(MTQ73CH/A)</p><p>分辨率:1179*2556</p>
+
+      </div>
+    </div>
+    
+    
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>AI图片生成</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.22);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-bg-hover: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-border-hover: rgba(255, 255, 255, 0.45);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 18px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-muted: #9a9085;
+            --user-bg: rgba(16, 185, 129, 0.75);
+            --ai-bg: rgba(255, 255, 255, 0.12);
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --bg-blur: 0px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 背景层（用于显示自定义背景和模糊） */
+        .bg-blur-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        /* 动态光斑 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow1 12s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -25%;
+            right: -18%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow2 14s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.6;
+            }
+            33% {
+                transform: translate(60px, -40px) scale(1.2);
+                opacity: 0.85;
+            }
+            66% {
+                transform: translate(-30px, 30px) scale(0.85);
+                opacity: 0.45;
+            }
+        }
+        @keyframes ambientGlow2 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.4;
+            }
+            40% {
+                transform: translate(-50px, 35px) scale(1.25);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translate(30px, -25px) scale(0.8);
+                opacity: 0.3;
+            }
+        }
+
+        /* 主容器 */
+        .app-container {
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 顶部固定栏 */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border-bottom: 1px solid var(--glass-border);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--glass-shadow);
+            flex-shrink: 0;
+        }
+        .top-bar h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .top-bar select {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c544a' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+        .top-bar button {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: var(--glass-shadow);
+            outline: none;
+        }
+        .top-bar button:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--glass-border-hover);
+            color: var(--text-primary);
+        }
+
+        /* 聊天区域 */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+        .chat-area::-webkit-scrollbar {
+            width: 0;
+        }
+
+        /* 气泡 */
+        .msg {
+            max-width: 80%;
+            word-wrap: break-word;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            animation: fadeUp 0.4s ease forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .user-msg {
+            background: var(--user-bg);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+        .ai-msg {
+            background: var(--ai-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+        .img-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        .img-preview:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* 底部输入栏 */
+        .input-bar {
+            flex-shrink: 0;
+            padding: 12px 16px 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border-top: 1px solid var(--glass-border);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05), 0 -1px 0 rgba(255, 255, 255, 0.2) inset;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .input-row input:focus {
+            border-color: var(--glass-border-hover);
+            box-shadow: 0 0 0 4px var(--theme-glow);
+            background: var(--glass-bg-hover);
+        }
+        .input-row button {
+            padding: 10px 22px;
+            background: var(--theme);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+        .input-row button:hover {
+            background: #0ea572;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15), 0 0 20px var(--theme-glow);
+        }
+        .input-row button:active {
+            transform: scale(0.95);
+        }
+
+        /* 图片预览弹窗 */
+        .img-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .img-modal.show {
+            display: flex;
+        }
+        .img-modal img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 确认弹窗 */
+        .confirm-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .confirm-modal.show {
+            display: flex;
+        }
+        .confirm-box {
+            width: 280px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: pop 0.25s ease forwards;
+        }
+        @keyframes pop {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .confirm-box p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+        .confirm-btns {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-btns button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.85rem;
+            cursor: pointer;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            transition: all var(--transition);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .confirm-btns .btn-cancel:hover {
+            background: var(--glass-bg-hover);
+        }
+        .confirm-btns .btn-ok {
+            background: var(--theme);
+            border: none;
+            color: #fff;
+        }
+        .confirm-btns .btn-ok:hover {
+            background: #0ea572;
+        }
+
+        @media (max-width: 480px) {
+            .top-bar {
+                padding: 8px 12px;
+            }
+            .chat-area {
+                padding: 12px;
+            }
+            .input-bar {
+                padding: 10px 12px 20px;
+            }
+            .msg {
+                max-width: 85%;
+            }
+        }
+
+        /* 浅色文字模式 */
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景层（同步主页背景） -->
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+
+    <div class="app-container">
+        <!-- 顶部固定栏 -->
+        <div class="top-bar">
+            <select id="modelSel">
+                <option value="flux">标准模型</option>
+                <option value="flux-pro">Pro高质量</option>
+            </select>
+            <h1>AI 图片生成</h1>
+            <button onclick="showConfirm()">🗑️ 清除</button>
+        </div>
+
+        <!-- 聊天区域 -->
+        <div class="chat-area" id="chatBox"></div>
+
+        <!-- 底部输入栏 -->
+        <div class="input-bar">
+            <div class="input-row">
+                <input type="text" id="inputTxt" placeholder="输入中文描述即可生成图片">
+                <button onclick="send()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览弹窗 -->
+    <div class="img-modal" id="imgModal" onclick="closeModal()">
+        <img src="" id="modalImg" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-box">
+            <p>确定要清空所有聊天记录吗？</p>
+            <div class="confirm-btns">
+                <button class="btn-cancel" onclick="hideConfirm()">取消</button>
+                <button class="btn-ok" onclick="doClearChat()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatList = JSON.parse(localStorage.getItem('aiImgChatData')) || [];
+        let lastImgUrl = "";
+        const chatBox = document.getElementById('chatBox');
+
+        // 翻译
+        async function zhToEn(text) {
+            try {
+                let res = await fetch(
+                    `https://api.mztu.cn/translate?text=${encodeURIComponent(text)}&from=zh&to=en`);
+                let json = await res.json();
+                if (json.data) return json.data + ", high detail, 4k, ultra realistic";
+            } catch (e) {}
+            return text + ", high detail, 4k";
+        }
+
+        // 渲染聊天
+        function renderChat() {
+            chatBox.innerHTML = "";
+            if (chatList.length === 0) {
+                chatBox.innerHTML =
+                    '<div style="text-align:center;color:var(--text-secondary);padding:40px;font-size:0.9rem;">✨ 输入描述，生成AI图片 ✨</div>';
+                return;
+            }
+            chatList.forEach((item, idx) => {
+                let div = document.createElement('div');
+                div.className = "flex mb-3";
+                div.style.animationDelay = (idx * 0.06) + "s";
+
+                if (item.type === 'user') {
+                    div.classList.add("justify-end");
+                    div.innerHTML = `<div class="msg user-msg">${item.text}</div>`;
+                } else {
+                    div.classList.add("justify-start");
+                    if (item.img) {
+                        div.innerHTML = `
+                        <div class="msg ai-msg" style="padding:8px;">
+                            <img src="${item.img}" class="img-preview" onclick="openModal('${item.img}')" loading="lazy">
+                        </div>`;
+                        lastImgUrl = item.img;
+                    } else {
+                        div.innerHTML = `<div class="msg ai-msg">${item.text}</div>`;
+                    }
+                }
+                chatBox.appendChild(div);
+            });
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 大图预览
+        function openModal(src) {
+            document.getElementById('modalImg').src = src;
+            document.getElementById('imgModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('imgModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 确认弹窗
+        function showConfirm() {
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function hideConfirm() {
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+
+        function doClearChat() {
+            chatList = [];
+            lastImgUrl = "";
+            localStorage.removeItem('aiImgChatData');
+            renderChat();
+            hideConfirm();
+        }
+
+        // 发送生成
+        async function send() {
+            let val = document.getElementById('inputTxt').value.trim();
+            if (!val) return;
+
+            chatList.push({ type: 'user', text: val });
+            renderChat();
+            document.getElementById('inputTxt').value = "";
+
+            chatList.push({ type: 'ai', text: "正在翻译并生成图片..." });
+            renderChat();
+
+            let en = await zhToEn(val);
+            let model = document.getElementById('modelSel').value;
+            let seed = Math.floor(Math.random() * 1000000);
+            let imgUrl =
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(en)}?width=1024&height=1024&seed=${seed}&model=${model}&nologo=true`;
+
+            chatList.pop();
+            chatList.push({ type: 'ai', img: imgUrl });
+            localStorage.setItem('aiImgChatData', JSON.stringify(chatList));
+            renderChat();
+        }
+
+        // 回车发送
+        document.getElementById('inputTxt').addEventListener('keydown', e => {
+            if (e.key === 'Enter') send();
+        });
+
+        // ESC 关闭弹窗
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal();
+                hideConfirm();
+            }
+        });
+
+        // 初始化
+        renderChat();
+
+        // ========== 同步主页全部样式设置 ==========
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+
+        const bgPresets = {
+            default: 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)',
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+
+        function applySharedSettings() {
+            // 1. 主题色
+            const themeColor = localStorage.getItem('themeColor') || '#10B981';
+            const rgb = hexToRgb(themeColor);
+            const glowRgba = `rgba(${rgb.r},${rgb.g},${rgb.b},0.22)`;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', glowRgba);
+            document.documentElement.style.setProperty('--user-bg', `rgba(${rgb.r},${rgb.g},${rgb.b},0.75)`);
+
+            // 2. 玻璃透明度
+            const glassOpacity = parseFloat(localStorage.getItem('glassOpacity')) || 10;
+            const opacityValue = glassOpacity / 100;
+            document.documentElement.style.setProperty('--glass-bg', `rgba(255, 255, 255, ${opacityValue})`);
+            document.documentElement.style.setProperty('--glass-bg-hover', `rgba(255, 255, 255, ${opacityValue + 0.12})`);
+            document.documentElement.style.setProperty('--ai-bg', `rgba(255, 255, 255, ${opacityValue + 0.04})`);
+            document.documentElement.style.setProperty('--input-bg', `rgba(255, 255, 255, ${opacityValue + 0.07})`);
+
+            // 3. 毛玻璃模糊强度
+            const blurAmount = localStorage.getItem('blurAmount') || '18';
+            document.documentElement.style.setProperty('--blur-amount', blurAmount + 'px');
+
+            // 4. 背景模糊
+            const bgBlurAmount = localStorage.getItem('bgBlurAmount') || '0';
+            document.documentElement.style.setProperty('--bg-blur', bgBlurAmount + 'px');
+
+            // 5. 背景图像
+            const bgType = localStorage.getItem('customBgType') || 'default';
+            const bgValue = localStorage.getItem('customBgValue') || 'default';
+            if (bgType === 'image' && bgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${bgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else if (bgType === 'preset' && bgPresets[bgValue]) {
+                bgBlurLayer.style.backgroundImage = bgPresets[bgValue];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                bgBlurLayer.style.backgroundImage = bgPresets['default'];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+
+            // 6. 字体颜色
+            applyTextColor();
+        }
+
+        function applyTextColor() {
+            const textColorMode = localStorage.getItem('textColorMode') || 'auto';
+            const customTextColor = localStorage.getItem('customTextColor');
+            const body = document.body;
+            body.classList.remove('body-text-light');
+
+            if (customTextColor) {
+                document.documentElement.style.setProperty('--text-primary', customTextColor);
+                document.documentElement.style.setProperty('--text-secondary', customTextColor);
+                document.documentElement.style.setProperty('--text-muted', customTextColor);
+            } else if (textColorMode === 'light') {
+                body.classList.add('body-text-light');
+            } else if (textColorMode === 'auto') {
+                const isDarkBg = localStorage.getItem('customBgIsDark') === '1';
+                if (isDarkBg) {
+                    body.classList.add('body-text-light');
+                } else {
+                    document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                    document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+                    document.documentElement.style.setProperty('--text-muted', '#9a9085');
+                }
+            } else {
+                document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+                document.documentElement.style.setProperty('--text-muted', '#9a9085');
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 16, g: 185, b: 129 };
+        }
+
+        applySharedSettings();
+    </script>
+</body>
+</html>

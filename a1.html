@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>随机选择器</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.25);
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-bg-hover: rgba(255, 255, 255, 0.22);
+            --glass-border: rgba(255, 255, 255, 0.28);
+            --glass-border-hover: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+            --radius: 18px;
+            --radius-sm: 14px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --bg-blur: 0px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景层（用于显示自定义背景和模糊） */
+        .bg-blur-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        /* 动态光斑背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow1 12s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -25%;
+            right: -18%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow2 14s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.6;
+            }
+            33% {
+                transform: translate(60px, -40px) scale(1.2);
+                opacity: 0.85;
+            }
+            66% {
+                transform: translate(-30px, 30px) scale(0.85);
+                opacity: 0.45;
+            }
+        }
+        @keyframes ambientGlow2 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.4;
+            }
+            40% {
+                transform: translate(-50px, 35px) scale(1.25);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translate(30px, -25px) scale(0.8);
+                opacity: 0.3;
+            }
+        }
+
+        /* 主卡片 */
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 32px 24px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            z-index: 2;
+            animation: fadeUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.4);
+        }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            resize: vertical;
+            min-height: 120px;
+            transition: all var(--transition);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+            font-family: inherit;
+        }
+        textarea:focus {
+            border-color: var(--glass-border-hover);
+            box-shadow: 0 0 0 4px var(--theme-glow), inset 0 1px 3px rgba(0, 0, 0, 0.03);
+            background: var(--glass-bg-hover);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin: 18px 0;
+        }
+        .btn-row button {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-primary {
+            background: var(--theme);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:hover {
+            background: #0ea572;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15), 0 0 18px var(--theme-glow);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-secondary {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            box-shadow: var(--glass-shadow);
+        }
+        .btn-secondary:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--glass-border-hover);
+        }
+
+        .result {
+            padding: 16px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px) saturate(130%);
+            -webkit-backdrop-filter: blur(12px) saturate(130%);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            box-shadow: var(--glass-shadow);
+            min-height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+            transition: all 0.3s ease;
+        }
+        .result.animate {
+            animation: bounce-in 0.5s cubic-bezier(0.2, 1, 0.25, 1) forwards;
+        }
+        @keyframes bounce-in {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.04);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .history {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        .history-tag {
+            padding: 5px 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .history-tag:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--glass-border-hover);
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 440px) {
+            .container {
+                padding: 24px 16px;
+                border-radius: var(--radius-sm);
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景层（同步主页背景） -->
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+
+    <div class="container">
+        <h2>🎲 随机选择器</h2>
+
+        <label for="items">选项列表</label>
+        <textarea id="items" rows="5" placeholder="用逗号、空格或换行分隔&#10;例如：苹果, 香蕉 橘子&#10;草莓&#10;西瓜"></textarea>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="pickBtn">随机抽取</button>
+            <button class="btn-secondary" id="clearBtn">清空</button>
+        </div>
+
+        <div class="result" id="result">点击按钮开始抽取</div>
+        <div class="history" id="history"></div>
+    </div>
+
+    <script>
+        const itemsTextarea = document.getElementById('items');
+        const resultDiv = document.getElementById('result');
+        const historyDiv = document.getElementById('history');
+        const pickBtn = document.getElementById('pickBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let historyList = [];
+
+        // 加载保存的选项
+        const savedOptions = localStorage.getItem('randomPickerOptions');
+        if (savedOptions) {
+            itemsTextarea.value = savedOptions;
+        }
+
+        // 保存选项
+        itemsTextarea.addEventListener('input', () => {
+            localStorage.setItem('randomPickerOptions', itemsTextarea.value);
+        });
+
+        function pickRandom() {
+            const input = itemsTextarea.value;
+            const separators = /[,，\n\s]+/;
+            const items = input.split(separators).filter(item => item.trim() !== '');
+
+            if (items.length === 0) {
+                resultDiv.textContent = '请输入至少一个选项';
+                resultDiv.classList.add('animate');
+                setTimeout(() => resultDiv.classList.remove('animate'), 500);
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * items.length);
+            const selected = items[randomIndex].trim();
+
+            resultDiv.textContent = `🎉 ${selected}`;
+            resultDiv.classList.add('animate');
+            setTimeout(() => resultDiv.classList.remove('animate'), 500);
+
+            // 添加到历史记录
+            historyList.unshift(selected);
+            if (historyList.length > 8) historyList.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            historyDiv.innerHTML = '';
+            historyList.forEach((item, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'history-tag';
+                tag.textContent = item;
+                tag.title = '点击再次填入';
+                tag.addEventListener('click', () => {
+                    itemsTextarea.value = item;
+                    localStorage.setItem('randomPickerOptions', item);
+                    pickRandom();
+                });
+                historyDiv.appendChild(tag);
+            });
+        }
+
+        function clearAll() {
+            itemsTextarea.value = '';
+            localStorage.removeItem('randomPickerOptions');
+            resultDiv.textContent = '点击按钮开始抽取';
+            historyList = [];
+            renderHistory();
+            resultDiv.classList.add('animate');
+            setTimeout(() => resultDiv.classList.remove('animate'), 500);
+        }
+
+        pickBtn.addEventListener('click', pickRandom);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Ctrl+Enter 快捷抽取
+        itemsTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                pickRandom();
+            }
+        });
+
+        // ========== 同步主页全部样式设置 ==========
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+
+        // 与主页保持一致的背景预设
+        const bgPresets = {
+            default: 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)',
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+
+        function applySharedSettings() {
+            // --- 1. 应用主题色 ---
+            const themeColor = localStorage.getItem('themeColor') || '#10B981';
+            const themeLight = localStorage.getItem('themeLight') || '#a7f3d0';
+            const rgb = hexToRgb(themeColor);
+            const glowRgba = `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', glowRgba);
+            // 可选同步主题浅色（用于装饰，非必须）
+            document.documentElement.style.setProperty('--theme-light', themeLight);
+
+            // --- 2. 应用玻璃透明度 ---
+            const glassOpacity = parseFloat(localStorage.getItem('glassOpacity')) || 10;
+            const opacityValue = glassOpacity / 100;
+            document.documentElement.style.setProperty('--glass-opacity', opacityValue);
+            // 调整所有透明度相关的CSS变量
+            document.documentElement.style.setProperty('--glass-bg', `rgba(255, 255, 255, ${opacityValue})`);
+            document.documentElement.style.setProperty('--glass-bg-hover', `rgba(255, 255, 255, ${opacityValue + 0.12})`);
+            document.documentElement.style.setProperty('--input-bg', `rgba(255, 255, 255, ${opacityValue + 0.05})`);
+
+            // --- 3. 应用毛玻璃模糊强度 ---
+            const blurAmount = localStorage.getItem('blurAmount') || '20';
+            document.documentElement.style.setProperty('--blur-amount', blurAmount + 'px');
+
+            // --- 4. 应用背景模糊强度 ---
+            const bgBlurAmount = localStorage.getItem('bgBlurAmount') || '0';
+            document.documentElement.style.setProperty('--bg-blur', bgBlurAmount + 'px');
+
+            // --- 5. 应用背景图像 ---
+            const bgType = localStorage.getItem('customBgType') || 'default';
+            const bgValue = localStorage.getItem('customBgValue') || 'default';
+            if (bgType === 'image' && bgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${bgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else if (bgType === 'preset' && bgPresets[bgValue]) {
+                bgBlurLayer.style.backgroundImage = bgPresets[bgValue];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                bgBlurLayer.style.backgroundImage = bgPresets['default'];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 16, g: 185, b: 129 };
+        }
+
+        // 立即应用所有同步设置
+        applySharedSettings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>鸣谢</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.25);
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-bg-hover: rgba(255, 255, 255, 0.25);
+            --glass-bg-active: rgba(255, 255, 255, 0.38);
+            --glass-border: rgba(255, 255, 255, 0.28);
+            --glass-border-hover: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+            --glass-shadow-hover: 0 10px 34px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+            --radius: 18px;
+            --radius-lg: 22px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --bg-blur: 0px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+
+        /* 背景层（用于显示自定义背景和模糊） */
+        .bg-blur-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        /* 动态光斑背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -28%;
+            left: -18%;
+            width: 68vw;
+            height: 68vw;
+            max-width: 560px;
+            max-height: 560px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow1 10s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -22%;
+            right: -16%;
+            width: 56vw;
+            height: 56vw;
+            max-width: 460px;
+            max-height: 460px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 68%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow2 13s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.65; }
+            33% { transform: translate(50px,-30px) scale(1.16); opacity:0.88; }
+            66% { transform: translate(-28px,22px) scale(0.86); opacity:0.48; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.48; }
+            40% { transform: translate(-40px,28px) scale(1.2); opacity:0.72; }
+            75% { transform: translate(22px,-18px) scale(0.82); opacity:0.35; }
+        }
+
+        /* 四叶草装饰 */
+        .clover { position: fixed; font-size: 28px; opacity: 0.55; pointer-events: none; z-index: 10; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1)); transition: transform 0.3s ease; }
+        .c1 { top: 32px; left: 32px; }
+        .c2 { top: 32px; right: 32px; }
+        .c3 { bottom: 32px; left: 32px; }
+        .c4 { bottom: 32px; right: 32px; }
+
+        /* 主内容容器 */
+        .thank-box {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 40px 24px 32px;
+            box-shadow: var(--glass-shadow);
+            animation: fadeUp 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+            opacity: 0; transform: translateY(20px);
+        }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .main-title { font-size: 2.2rem; font-weight: 800; letter-spacing: 8px; color: var(--text-primary); margin-bottom: 40px; text-shadow: 0 1px 3px rgba(255,255,255,0.45); }
+
+        /* 鸣谢条目 玻璃卡片 */
+        .item { width: 100%; padding: 16px 20px; margin: 12px 0; background: var(--glass-bg); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); border: 1px solid var(--glass-border); border-radius: var(--radius); box-shadow: var(--glass-shadow); cursor: pointer; transition: all var(--transition); font-size: 0.95rem; font-weight: 500; color: var(--text-primary); position: relative; overflow: hidden; }
+        .item::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 100%); border-radius: var(--radius) var(--radius) 0 0; pointer-events: none; transition: opacity var(--transition); }
+        .item:hover { transform: translateY(-4px); background: var(--glass-bg-hover); border-color: var(--glass-border-hover); box-shadow: var(--glass-shadow-hover); }
+        .item:hover::after { opacity: 0.7; }
+        .item:active { transform: scale(0.96); transition: transform 0.1s; background: var(--glass-bg-active); }
+
+        .txt-pink { color: #f472b6; }
+        .txt-red  { color: #ef4444; }
+        .txt-gold { color: #caa842; }
+
+        /* 底部文字 */
+        .foot { margin-top: 32px; font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.03em; }
+
+        /* 彩带粒子 */
+        .ribbon { position: absolute; width: 6px; height: 20px; border-radius: 3px; opacity: 0.55; pointer-events: none; z-index: 5; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-100px) rotate(0deg); } 100% { transform: translateY(100vh) rotate(360deg); } }
+
+        /* 音频启动按钮 */
+        #playPrompt { display: block; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 999; background: var(--glass-bg); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid var(--glass-border); border-radius: 28px; padding: 12px 28px; color: var(--text-primary); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; box-shadow: var(--glass-shadow); transition: all var(--transition); white-space: nowrap; }
+        #playPrompt:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); box-shadow: var(--glass-shadow-hover); }
+        #playPrompt:active { transform: translateX(-50%) scale(0.94); background: var(--glass-bg-active); }
+
+        @media (max-width: 480px) { .thank-box { padding: 30px 16px 24px; border-radius: var(--radius); } .main-title { font-size: 1.8rem; letter-spacing: 6px; } .item { padding: 14px 16px; font-size: 0.88rem; } .clover { font-size: 22px; } }
+
+        /* 浅色文字模式 */
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景层（同步主页背景） -->
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+
+    <!-- 四角四叶草装饰 -->
+    <div class="clover c1">🍀</div>
+    <div class="clover c2">🍀</div>
+    <div class="clover c3">🍀</div>
+    <div class="clover c4">🍀</div>
+
+    <div class="thank-box">
+        <h2 class="main-title">鸣谢</h2>
+        <div class="item" style="animation-delay:0.2s;"><span class="txt-pink">@Druiy为爱发电</span></div>
+        <div class="item" style="animation-delay:0.4s;"><span class="txt-pink">@。文案设计</span></div>
+        <div class="item" style="animation-delay:0.6s;"><span class="txt-red">开发工具：WEBCAT / VSCODE</span></div>
+        <div class="item" style="animation-delay:0.8s;"><span class="txt-gold">AI 优化:豆包/DeepSeek</span></div>
+        <div class="foot">谨向各位贡献者及单位致以感谢</div>
+    </div>
+
+    <!-- 音频启动按钮 -->
+    <h1 id="playPrompt">点击开始播放音乐</h1>
+    <audio id="BGM" autoplay loop><source src="b.mp3" type="audio/mpeg"></audio>
+
+    <script>
+        // 生成彩带飘落
+        function createRibbon() {
+            const colors = ['#f472b6', '#60a5fa', '#4ade80', '#facc15', '#a78bfa'];
+            const rib = document.createElement('div');
+            rib.classList.add('ribbon');
+            rib.style.left = Math.random() * 100 + 'vw';
+            rib.style.background = colors[Math.floor(Math.random() * colors.length)];
+            rib.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            document.body.appendChild(rib);
+            setTimeout(() => rib.remove(), 7000);
+        }
+        setInterval(createRibbon, 200);
+
+        // 音频控制逻辑
+        window.addEventListener('load', function () {
+            var audio = document.getElementById('BGM');
+            var playPrompt = document.getElementById('playPrompt');
+            var storedTime = sessionStorage.getItem('audioTime');
+            playPrompt.addEventListener('click', function () {
+                if (storedTime) { audio.currentTime = parseFloat(storedTime); }
+                audio.play();
+                playPrompt.style.display = 'none';
+            });
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') { audio.pause(); }
+                else if (document.visibilityState === 'visible') { audio.play(); }
+            });
+        });
+
+        // ========== 同步主页全部样式设置 ==========
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+        const bgPresets = {
+            default: 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)',
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+
+        function applySharedSettings() {
+            const themeColor = localStorage.getItem('themeColor') || '#10B981';
+            const rgb = hexToRgb(themeColor);
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`);
+
+            const glassOpacity = parseFloat(localStorage.getItem('glassOpacity')) || 10;
+            const opacityValue = glassOpacity / 100;
+            document.documentElement.style.setProperty('--glass-bg', `rgba(255, 255, 255, ${opacityValue})`);
+            document.documentElement.style.setProperty('--glass-bg-hover', `rgba(255, 255, 255, ${opacityValue + 0.15})`);
+            document.documentElement.style.setProperty('--glass-bg-active', `rgba(255, 255, 255, ${opacityValue + 0.28})`);
+
+            const blurAmount = localStorage.getItem('blurAmount') || '20';
+            document.documentElement.style.setProperty('--blur-amount', blurAmount + 'px');
+
+            const bgBlurAmount = localStorage.getItem('bgBlurAmount') || '0';
+            document.documentElement.style.setProperty('--bg-blur', bgBlurAmount + 'px');
+
+            const bgType = localStorage.getItem('customBgType') || 'default';
+            const bgValue = localStorage.getItem('customBgValue') || 'default';
+            if (bgType === 'image' && bgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${bgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else if (bgType === 'preset' && bgPresets[bgValue]) {
+                bgBlurLayer.style.backgroundImage = bgPresets[bgValue];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                bgBlurLayer.style.backgroundImage = bgPresets['default'];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+
+            applyTextColor();
+        }
+
+        function applyTextColor() {
+            const textColorMode = localStorage.getItem('textColorMode') || 'auto';
+            const customTextColor = localStorage.getItem('customTextColor');
+            const body = document.body;
+            body.classList.remove('body-text-light');
+            if (customTextColor) {
+                document.documentElement.style.setProperty('--text-primary', customTextColor);
+                document.documentElement.style.setProperty('--text-secondary', customTextColor);
+            } else if (textColorMode === 'light') {
+                body.classList.add('body-text-light');
+            } else if (textColorMode === 'auto') {
+                if (localStorage.getItem('customBgIsDark') === '1') body.classList.add('body-text-light');
+                else {
+                    document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                    document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+                }
+            } else {
+                document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1],16), g: parseInt(result[2],16), b: parseInt(result[3],16) } : { r:16,g:185,b:129 };
+        }
+
+        applySharedSettings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>吸猫吸狗</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.25);
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-bg-hover: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.28);
+            --glass-border-hover: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+            --radius: 18px;
+            --radius-lg: 22px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-muted: #9a9085;
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --bg-blur: 0px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景层（用于显示自定义背景和模糊） */
+        .bg-blur-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before {
+            top: -28%; left: -18%;
+            width: 68vw; height: 68vw;
+            max-width: 560px; max-height: 560px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            animation: ambientGlow1 10s ease-in-out infinite;
+        }
+        body::after {
+            bottom: -22%; right: -16%;
+            width: 56vw; height: 56vw;
+            max-width: 460px; max-height: 460px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 68%);
+            animation: ambientGlow2 13s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.65; }
+            33% { transform: translate(50px,-30px) scale(1.16); opacity:0.88; }
+            66% { transform: translate(-28px,22px) scale(0.86); opacity:0.48; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.48; }
+            40% { transform: translate(-40px,28px) scale(1.2); opacity:0.72; }
+            75% { transform: translate(22px,-18px) scale(0.82); opacity:0.35; }
+        }
+
+        .pet-container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 28px 22px 24px;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            animation: fadeUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+            opacity: 0; transform: translateY(16px);
+        }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        h1 {
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--text-primary); margin-bottom: 22px;
+            letter-spacing: -0.02em; text-shadow: 0 1px 3px rgba(255,255,255,0.4);
+        }
+
+        .control-group {
+            margin-bottom: 22px; display: flex; gap: 10px;
+            align-items: center; position: relative;
+        }
+
+        .custom-select { flex: 1; position: relative; user-select: none; }
+        .select-trigger {
+            width: 100%; padding: 12px 14px;
+            border: 1px solid var(--glass-border); border-radius: var(--radius);
+            background: var(--input-bg);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary); font-size: 0.93rem; font-weight: 500;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            transition: all var(--transition); box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .select-trigger::after {
+            content: '';
+            width: 12px; height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c544a' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-size: contain; background-repeat: no-repeat;
+            transition: transform 0.3s ease;
+        }
+        .select-trigger.active::after { transform: rotate(180deg); }
+        .select-trigger:hover { border-color: var(--glass-border-hover); background: var(--glass-bg-hover); }
+
+        .select-options {
+            position: absolute; top: calc(100% + 6px); left: 0; width: 100%;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(26px) saturate(180%);
+            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.4); border-radius: var(--radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.2) inset;
+            overflow: hidden; opacity: 0; pointer-events: none;
+            transform: translateY(8px); transition: all 0.3s cubic-bezier(0.22,0.61,0.36,1); z-index: 50;
+        }
+        .select-options.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .option-item {
+            padding: 13px 16px; font-size: 0.9rem; font-weight: 500;
+            color: #3a3a3a; cursor: pointer; transition: all 0.25s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 8px;
+            background: transparent;
+        }
+        .option-item:last-child { border-bottom: none; }
+        .option-item:hover { background: rgba(255,255,255,0.35); color: #111; padding-left: 22px; }
+        .option-item.selected { background: rgba(255,255,255,0.4); color: var(--theme); font-weight: 600; box-shadow: inset 3px 0 0 var(--theme); }
+
+        #getPetBtn {
+            padding: 12px 20px; background: var(--theme); border: 1px solid var(--theme);
+            color: #fff; border-radius: var(--radius); font-size: 0.93rem; font-weight: 600;
+            letter-spacing: 0.02em; cursor: pointer; white-space: nowrap;
+            transition: all var(--transition); box-shadow: var(--glass-shadow); text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        #getPetBtn:hover { background: #0ea572; border-color: #0ea572; box-shadow: var(--glass-shadow-hover), 0 0 18px var(--theme-glow); transform: translateY(-1px); }
+        #getPetBtn:active { transform: scale(0.96); }
+
+        .image-preview {
+            background: var(--glass-bg); backdrop-filter: blur(14px) saturate(130%);
+            -webkit-backdrop-filter: blur(14px) saturate(130%);
+            border: 1px solid var(--glass-border); border-radius: var(--radius);
+            padding: 18px; min-height: 200px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; box-shadow: var(--glass-shadow); overflow: hidden;
+        }
+        #petImage { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: none; transition: opacity 0.4s ease; }
+        .loading { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; line-height: 1.7; padding: 10px; }
+
+        @media (max-width: 420px) {
+            .pet-container { padding: 22px 16px 20px; border-radius: var(--radius); }
+            h1 { font-size: 1.3rem; }
+            .control-group { flex-direction: column; gap: 8px; }
+            #getPetBtn { width: 100%; }
+            .custom-select { width: 100%; }
+        }
+
+        /* 浅色文字模式 */
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景层（同步主页背景） -->
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+
+    <div class="pet-container">
+        <h1>吸猫吸狗</h1>
+        <div class="control-group">
+            <div class="custom-select" id="customSelect">
+                <div class="select-trigger" id="selectTrigger">
+                    <span id="selectText">🐱 猫咪</span>
+                </div>
+                <div class="select-options" id="selectOptions">
+                    <div class="option-item selected" data-value="cat">🐱 猫咪</div>
+                    <div class="option-item" data-value="dog">🐶 狗狗</div>
+                </div>
+            </div>
+            <button id="getPetBtn" onclick="getRandomPet()">获取萌宠</button>
+        </div>
+        <div class="image-preview">
+            <div id="loadingTip" class="loading">选择萌宠类型，点击按钮获取图片~</div>
+            <img id="petImage" alt="可爱萌宠">
+        </div>
+    </div>
+
+    <script>
+        const selectTrigger = document.getElementById('selectTrigger');
+        const selectOptions = document.getElementById('selectOptions');
+        const selectText = document.getElementById('selectText');
+        const optionItems = document.querySelectorAll('.option-item');
+        let currentPetType = 'cat';
+
+        selectTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectTrigger.classList.toggle('active');
+            selectOptions.classList.toggle('show');
+        });
+
+        optionItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                optionItems.forEach(opt => opt.classList.remove('selected'));
+                item.classList.add('selected');
+                selectText.textContent = item.textContent;
+                currentPetType = item.dataset.value;
+                selectTrigger.classList.remove('active');
+                selectOptions.classList.remove('show');
+            });
+        });
+
+        document.addEventListener('click', () => {
+            selectTrigger.classList.remove('active');
+            selectOptions.classList.remove('show');
+        });
+
+        function getRandomPet() {
+            const petType = currentPetType;
+            const petImg = document.getElementById("petImage");
+            const loadingTip = document.getElementById("loadingTip");
+
+            loadingTip.textContent = `正在寻找可爱的${getPetName(petType)}...请稍候 🌷`;
+            loadingTip.style.display = 'block';
+            petImg.style.display = "none";
+            petImg.style.opacity = '0';
+
+            let apiUrl;
+            let fallbackUrl;
+
+            if (petType === 'cat') {
+                apiUrl = "https://api.thecatapi.com/v1/images/search";
+            } else if (petType === 'dog') {
+                apiUrl = "https://dog.ceo/api/breeds/image/random";
+                fallbackUrl = `https://placedog.net/500/500?random=${Math.random()}`;
+            } else {
+                apiUrl = `https://placekitten.com/400/500?random=${Math.random()}`;
+                loadStaticPetImg(apiUrl, petType);
+                return;
+            }
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error("API请求失败");
+                    return response.json();
+                })
+                .then(data => {
+                    let imgUrl;
+                    if (petType === 'cat') {
+                        imgUrl = data[0].url;
+                    } else if (petType === 'dog') {
+                        imgUrl = data.message;
+                    }
+                    displayImage(imgUrl);
+                })
+                .catch(error => {
+                    console.warn(`主API失败，尝试备用源`, error);
+                    if (fallbackUrl) {
+                        displayImage(fallbackUrl);
+                    } else {
+                        displayImage(`https://placekitten.com/500/500?random=${Math.random()}`);
+                    }
+                });
+        }
+
+        function displayImage(url) {
+            const petImg = document.getElementById("petImage");
+            const loadingTip = document.getElementById("loadingTip");
+            petImg.src = url;
+            petImg.onload = () => {
+                loadingTip.style.display = 'none';
+                petImg.style.display = "block";
+                requestAnimationFrame(() => {
+                    petImg.style.opacity = '1';
+                });
+            };
+            petImg.onerror = () => {
+                loadingTip.textContent = "图片加载失败，请重试";
+            };
+        }
+
+        function loadStaticPetImg(url, petType) {
+            displayImage(url);
+        }
+
+        function getPetName(type) {
+            const nameMap = { cat: "猫咪", dog: "狗狗", rabbit: "兔子", bird: "小鸟", hamster: "仓鼠" };
+            return nameMap[type] || "萌宠";
+        }
+
+        // ========== 同步主页全部样式设置 ==========
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+
+        const bgPresets = {
+            default: 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)',
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+
+        function applySharedSettings() {
+            // 1. 主题色
+            const themeColor = localStorage.getItem('themeColor') || '#10B981';
+            const rgb = hexToRgb(themeColor);
+            const glowRgba = `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', glowRgba);
+
+            // 2. 玻璃透明度
+            const glassOpacity = parseFloat(localStorage.getItem('glassOpacity')) || 10;
+            const opacityValue = glassOpacity / 100;
+            document.documentElement.style.setProperty('--glass-bg', `rgba(255, 255, 255, ${opacityValue})`);
+            document.documentElement.style.setProperty('--glass-bg-hover', `rgba(255, 255, 255, ${opacityValue + 0.15})`);
+            document.documentElement.style.setProperty('--input-bg', `rgba(255, 255, 255, ${opacityValue + 0.05})`);
+
+            // 3. 毛玻璃模糊强度
+            const blurAmount = localStorage.getItem('blurAmount') || '20';
+            document.documentElement.style.setProperty('--blur-amount', blurAmount + 'px');
+
+            // 4. 背景模糊
+            const bgBlurAmount = localStorage.getItem('bgBlurAmount') || '0';
+            document.documentElement.style.setProperty('--bg-blur', bgBlurAmount + 'px');
+
+            // 5. 背景图像
+            const bgType = localStorage.getItem('customBgType') || 'default';
+            const bgValue = localStorage.getItem('customBgValue') || 'default';
+            if (bgType === 'image' && bgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${bgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else if (bgType === 'preset' && bgPresets[bgValue]) {
+                bgBlurLayer.style.backgroundImage = bgPresets[bgValue];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                bgBlurLayer.style.backgroundImage = bgPresets['default'];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+
+            // 6. 字体颜色
+            applyTextColor();
+        }
+
+        function applyTextColor() {
+            const textColorMode = localStorage.getItem('textColorMode') || 'auto';
+            const customTextColor = localStorage.getItem('customTextColor');
+            const body = document.body;
+            body.classList.remove('body-text-light');
+
+            if (customTextColor) {
+                document.documentElement.style.setProperty('--text-primary', customTextColor);
+                document.documentElement.style.setProperty('--text-secondary', customTextColor);
+                document.documentElement.style.setProperty('--text-muted', customTextColor);
+            } else if (textColorMode === 'light') {
+                body.classList.add('body-text-light');
+            } else if (textColorMode === 'auto') {
+                const isDarkBg = localStorage.getItem('customBgIsDark') === '1';
+                if (isDarkBg) {
+                    body.classList.add('body-text-light');
+                } else {
+                    document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                    document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+                    document.documentElement.style.setProperty('--text-muted', '#9a9085');
+                }
+            } else {
+                document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+                document.documentElement.style.setProperty('--text-secondary', '#5c544a');
+                document.documentElement.style.setProperty('--text-muted', '#9a9085');
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 16, g: 185, b: 129 };
+        }
+
+        // 立即应用所有同步设置
+        applySharedSettings();
+    </script>
+</body>
+</html>

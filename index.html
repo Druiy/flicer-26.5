@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Flicer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-light: #a7f3d0;
+            --theme-soft: #d1fae5;
+            --theme-glow: rgba(16, 185, 129, 0.28);
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-bg-hover: rgba(255, 255, 255, 0.22);
+            --glass-bg-active: rgba(255, 255, 255, 0.36);
+            --glass-border: rgba(255, 255, 255, 0.26);
+            --glass-border-hover: rgba(255, 255, 255, 0.48);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 1px 0 rgba(255, 255, 255, 0.40) inset;
+            --glass-shadow-hover: 0 10px 34px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 1px 0 rgba(255, 255, 255, 0.50) inset;
+            --glass-shadow-active: 0 2px 6px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+            --radius-sm: 12px;
+            --radius: 18px;
+            --radius-lg: 22px;
+            --radius-xl: 26px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --transition-fast: 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --glass-opacity: 0.10;
+            --font-scale: 1;
+            --anim-speed: 1;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-heading: #1a1a1a;
+            --text-muted: #9a9085;
+            --bg-blur: 0px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            position: relative; padding: 0; margin: 0;
+            font-size: calc(1rem * var(--font-scale));
+            transition: font-size 0.2s, color 0.3s;
+        }
+
+        .bg-blur-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        body::before, body::after {
+            content: ''; position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+        }
+        body::before {
+            top: -28%; left: -18%; width: 68vw; height: 68vw; max-width: 560px; max-height: 560px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 70%);
+            animation: ambientGlow1 calc(10s / var(--anim-speed)) ease-in-out infinite;
+        }
+        body::after {
+            bottom: -22%; right: -16%; width: 56vw; height: 56vw; max-width: 460px; max-height: 460px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.13) 0%, transparent 68%);
+            animation: ambientGlow2 calc(13s / var(--anim-speed)) ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.65; }
+            33% { transform: translate(50px,-30px) scale(1.16); opacity:0.88; }
+            66% { transform: translate(-28px,22px) scale(0.86); opacity:0.48; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.48; }
+            40% { transform: translate(-40px,28px) scale(1.2); opacity:0.72; }
+            75% { transform: translate(22px,-18px) scale(0.82); opacity:0.35; }
+        }
+
+        .app-shell { width:100%; height:100dvh; max-height:100dvh; background:transparent; border-radius:0; border:none; box-shadow:none; display:flex; flex-direction:column; overflow:hidden; position:relative; z-index:1; padding:0; }
+        .main-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:36px 20px 14px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; position:relative; z-index:2; background:transparent; }
+        .main-scroll::-webkit-scrollbar { width:0; height:0; }
+
+        .fade-item { animation: fadeUp calc(0.55s / var(--anim-speed)) cubic-bezier(0.22,0.61,0.36,1) forwards; opacity:0; transform:translateY(16px); }
+        @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+        @keyframes breathe { 0%,100% { transform:scale(1); opacity:0.7; } 50% { transform:scale(1.06); opacity:1; } }
+
+        .home-hero { position:relative; padding:8px 6px 26px; margin-bottom:2px; overflow:visible; z-index:1; }
+        .home-hero .hero-badge { display:inline-flex; align-items:center; gap:7px; padding:6px 15px; border-radius:22px; background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); -webkit-backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); border:1px solid var(--glass-border); font-size:0.68rem; font-weight:500; color:var(--text-muted); letter-spacing:0.03em; margin-bottom:14px; box-shadow:var(--glass-shadow); }
+        .home-hero .hero-badge .dot { width:7px; height:7px; border-radius:50%; background:var(--theme); display:inline-block; animation:breathe calc(2.8s / var(--anim-speed)) ease-in-out infinite; box-shadow:0 0 10px var(--theme-glow); }
+        .home-hero h1 { font-size:2.8rem; font-weight:800; letter-spacing:-0.04em; color:var(--text-heading); line-height:1; margin-bottom:4px; text-shadow:0 1px 3px rgba(255,255,255,0.45); }
+        .home-hero .hero-subtitle { font-size:0.82rem; color:var(--text-muted); font-weight:400; letter-spacing:0.01em; }
+        .home-hero .hero-accent { position:absolute; right:16px; top:26px; width:54px; height:54px; border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.65), var(--theme-soft)); z-index:-1; opacity:0.55; filter:blur(10px); animation:breathe calc(4s / var(--anim-speed)) ease-in-out infinite; }
+        .home-hero .hero-accent2 { position:absolute; right:44px; top:50px; width:18px; height:18px; border-radius:50%; background:var(--theme-light); z-index:-1; opacity:0.5; filter:blur(5px); animation:breathe calc(3.6s / var(--anim-speed)) ease-in-out infinite 0.4s; }
+
+        .menu-row { display:flex; flex-direction:column; gap:7px; }
+        .menu-card { display:flex; align-items:center; justify-content:space-between; padding:15px 17px; border-radius:var(--radius); background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); -webkit-backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); border:1px solid var(--glass-border); cursor:pointer; text-decoration:none; color:var(--text-primary); transition:all calc(0.35s / var(--anim-speed)); position:relative; overflow:hidden; -webkit-tap-highlight-color:transparent; user-select:none; box-shadow:var(--glass-shadow); }
+        .menu-card::after { content:''; position:absolute; top:0; left:0; right:0; height:40%; background:linear-gradient(180deg, rgba(255,255,255,0.38) 0%, transparent 100%); border-radius:var(--radius) var(--radius) 0 0; pointer-events:none; transition:opacity var(--transition-fast); z-index:0; }
+        .menu-card:hover { background:rgba(255,255,255, calc(var(--glass-opacity) + 0.12)); border-color:var(--glass-border-hover); box-shadow:var(--glass-shadow-hover); transform:translateY(-2px); }
+        .menu-card:hover::after { opacity:0.75; }
+        .menu-card:active { transform:scale(0.97); transition:transform 0.12s; background:rgba(255,255,255, calc(var(--glass-opacity) + 0.26)); box-shadow:var(--glass-shadow-active); }
+        .menu-card .menu-left { display:flex; align-items:center; gap:13px; position:relative; z-index:1; }
+        .menu-card .menu-index { width:34px; height:34px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.76rem; flex-shrink:0; letter-spacing:0.02em; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.45); box-shadow:0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.45); }
+        .menu-card .menu-title { font-weight:600; font-size:0.92rem; letter-spacing:-0.01em; color:var(--text-primary); position:relative; z-index:1; }
+        .menu-card .menu-arrow-svg { flex-shrink:0; width:19px; height:19px; opacity:0.25; transition:all calc(0.35s / var(--anim-speed)); position:relative; z-index:1; color:var(--text-secondary); }
+        .menu-card:hover .menu-arrow-svg { opacity:0.55; transform:translateX(3px); }
+
+        .discover-header { margin-bottom:18px; }
+        .discover-header h2 { font-size:1.55rem; font-weight:700; letter-spacing:-0.03em; color:var(--text-heading); }
+        .discover-header .tagline { font-size:0.76rem; color:var(--text-muted); margin-top:2px; letter-spacing:0.01em; }
+        .discover-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:11px; }
+        @media (min-width:520px) { .discover-grid { grid-template-columns:repeat(3, 1fr); gap:13px; } }
+        @media (min-width:720px) { .discover-grid { grid-template-columns:repeat(4, 1fr); gap:14px; } }
+        .discover-tile { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:22px 14px 20px; min-height:140px; border-radius:var(--radius-lg); background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); -webkit-backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); border:1px solid var(--glass-border); text-decoration:none; color:var(--text-primary); transition:all calc(0.35s / var(--anim-speed)); cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; position:relative; overflow:hidden; box-shadow:var(--glass-shadow); }
+        .discover-tile::before { content:''; position:absolute; top:0; left:0; right:0; height:38%; background:linear-gradient(180deg, rgba(255,255,255,0.32) 0%, transparent 100%); border-radius:var(--radius-lg) var(--radius-lg) 0 0; pointer-events:none; transition:opacity var(--transition-fast); z-index:0; }
+        .discover-tile:hover { background:rgba(255,255,255, calc(var(--glass-opacity) + 0.12)); border-color:var(--glass-border-hover); box-shadow:var(--glass-shadow-hover); transform:translateY(-3px); }
+        .discover-tile:hover::before { opacity:0.7; }
+        .discover-tile:active { transform:scale(0.94); transition:transform 0.1s; background:rgba(255,255,255, calc(var(--glass-opacity) + 0.26)); box-shadow:var(--glass-shadow-active); }
+        .discover-tile .tile-shape { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.78rem; letter-spacing:0.03em; position:relative; z-index:1; flex-shrink:0; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.45); box-shadow:0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5); transition:all calc(0.35s / var(--anim-speed)); }
+        .discover-tile:hover .tile-shape { transform:scale(1.06); box-shadow:0 3px 10px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.55); }
+        .discover-tile .tile-label { font-size:0.76rem; font-weight:600; color:var(--text-primary); text-align:center; line-height:1.3; letter-spacing:-0.01em; position:relative; z-index:1; }
+        .discover-tile .tile-desc { font-size:0.65rem; font-weight:400; color:var(--text-muted); text-align:center; line-height:1.25; letter-spacing:0.01em; position:relative; z-index:1; margin-top:-4px; display:none; }
+        @media (min-width:400px) { .discover-tile .tile-desc { display:block; } .discover-tile { min-height:155px; padding:24px 16px 22px; } .discover-tile .tile-shape { width:48px; height:48px; border-radius:15px; font-size:0.82rem; } .discover-tile .tile-label { font-size:0.8rem; } }
+
+        .profile-section { display:flex; flex-direction:column; align-items:center; padding-top:14px; padding-bottom:6px; }
+        .avatar-container { position:relative; width:84px; height:84px; border-radius:50%; background:rgba(255,255,255,0.22); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:2px solid rgba(255,255,255,0.45); padding:3px; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.2) inset; transition:all calc(0.35s / var(--anim-speed)); }
+        .avatar-container:hover { box-shadow:0 6px 28px rgba(0,0,0,0.09), 0 0 0 1px rgba(255,255,255,0.3) inset; transform:scale(1.04); }
+        .avatar-container::after { content:'📷'; position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; background:var(--theme); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#fff; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.15); pointer-events:none; z-index:5; }
+        .avatar-inner { width:100%; height:100%; border-radius:50%; overflow:hidden; background:#e8e4dd; box-shadow:inset 0 1px 3px rgba(0,0,0,0.08); }
+        .avatar-inner img { width:100%; height:100%; object-fit:cover; display:block; }
+        .edit-name { border:2px solid transparent; outline:none; background:rgba(255,255,255,0.18); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); text-align:center; font-weight:700; font-size:1.2rem; color:var(--text-primary); width:150px; padding:7px 12px; border-radius:14px; transition:all calc(0.35s / var(--anim-speed)); letter-spacing:-0.02em; margin-top:10px; box-shadow:0 1px 3px rgba(0,0,0,0.02); }
+        .edit-name:focus { background:rgba(255,255,255,0.42); border-color:rgba(255,255,255,0.6); box-shadow:0 0 0 7px var(--theme-glow), 0 2px 10px rgba(0,0,0,0.03); }
+        .profile-hint { font-size:0.66rem; color:var(--text-muted); margin-top:2px; letter-spacing:0.02em; }
+        .profile-links { display:flex; flex-direction:column; gap:7px; margin-top:18px; width:100%; }
+        .profile-link-card { display:flex; align-items:center; justify-content:space-between; padding:15px 17px; border-radius:var(--radius); background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); -webkit-backdrop-filter:blur(var(--blur-amount)) saturate(var(--saturate-amount)); border:1px solid var(--glass-border); cursor:pointer; text-decoration:none; color:var(--text-primary); transition:all calc(0.35s / var(--anim-speed)); -webkit-tap-highlight-color:transparent; user-select:none; box-shadow:var(--glass-shadow); position:relative; overflow:hidden; }
+        .profile-link-card::after { content:''; position:absolute; top:0; left:0; right:0; height:40%; background:linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%); border-radius:var(--radius) var(--radius) 0 0; pointer-events:none; transition:opacity var(--transition-fast); }
+        .profile-link-card:hover { background:rgba(255,255,255, calc(var(--glass-opacity) + 0.12)); border-color:var(--glass-border-hover); box-shadow:var(--glass-shadow-hover); transform:translateY(-1px); }
+        .profile-link-card:hover::after { opacity:0.65; }
+        .profile-link-card:active { transform:scale(0.97); transition:transform 0.1s; background:rgba(255,255,255, calc(var(--glass-opacity) + 0.26)); box-shadow:var(--glass-shadow-active); }
+        .profile-link-card .link-label { font-weight:600; font-size:0.92rem; letter-spacing:-0.01em; color:var(--text-primary); position:relative; z-index:1; }
+        .profile-link-card .link-arrow { width:19px; height:19px; opacity:0.25; transition:all calc(0.35s / var(--anim-speed)); position:relative; z-index:1; color:var(--text-secondary); }
+        .profile-link-card:hover .link-arrow { opacity:0.55; transform:translateX(2px); }
+
+        .settings-header h2 { font-size:1.45rem; font-weight:700; letter-spacing:-0.03em; color:var(--text-heading); }
+        .settings-section-label { font-weight:600; font-size:0.82rem; color:var(--text-secondary); letter-spacing:-0.01em; margin-bottom:10px; margin-top:18px; }
+        .settings-section-label:first-of-type { margin-top:0; }
+        .theme-dots-row { display:flex; align-items:center; gap:11px; flex-wrap:wrap; padding:5px 0; }
+        .theme-dot-btn { width:38px; height:38px; border-radius:50%; cursor:pointer; transition:all calc(0.35s / var(--anim-speed)); border:2.5px solid rgba(255,255,255,0.48); box-shadow:0 2px 9px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.5), inset 0 -2px 3px rgba(0,0,0,0.05); position:relative; outline:none; -webkit-tap-highlight-color:transparent; }
+        .theme-dot-btn::after { content:''; position:absolute; top:16%; left:24%; width:26%; height:18%; background:rgba(255,255,255,0.68); border-radius:50%; pointer-events:none; transition:all calc(0.35s / var(--anim-speed)); }
+        .theme-dot-btn:hover { transform:scale(1.15); box-shadow:0 4px 16px rgba(0,0,0,0.12), inset 0 1px 2px rgba(255,255,255,0.55), inset 0 -2px 3px rgba(0,0,0,0.04); border-color:rgba(255,255,255,0.75); }
+        .theme-dot-btn:hover::after { top:13%; left:22%; width:30%; height:22%; background:rgba(255,255,255,0.82); }
+        .theme-dot-btn:active { transform:scale(0.85); transition:transform 0.1s; }
+        .theme-dot-btn.active-ring { border-color:#fff; box-shadow:0 0 0 7px var(--theme-glow), 0 2px 10px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.5); animation:activePulse 2.5s ease-in-out infinite; }
+        @keyframes activePulse { 0%,100% { box-shadow:0 0 0 7px var(--theme-glow), 0 2px 10px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.5); } 50% { box-shadow:0 0 0 13px rgba(16,185,129,0.05), 0 2px 10px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.5); } }
+        #colorPreviewBall { width:38px; height:38px; border-radius:50%; border:2.5px dashed rgba(170,158,148,0.5); transition:all calc(0.35s / var(--anim-speed)); flex-shrink:0; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); }
+        .back-btn { display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border-radius:22px; background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(16px) saturate(140%); -webkit-backdrop-filter:blur(16px) saturate(140%); border:1px solid var(--glass-border); cursor:pointer; font-weight:500; font-size:0.83rem; color:var(--text-secondary); transition:all calc(0.35s / var(--anim-speed)); letter-spacing:-0.01em; -webkit-tap-highlight-color:transparent; box-shadow:var(--glass-shadow); position:relative; overflow:hidden; }
+        .back-btn::after { content:''; position:absolute; top:0; left:0; right:0; height:40%; background:linear-gradient(180deg, rgba(255,255,255,0.38) 0%, transparent 100%); border-radius:22px 22px 0 0; pointer-events:none; }
+        .back-btn:hover { background:rgba(255,255,255, calc(var(--glass-opacity) + 0.12)); border-color:var(--glass-border-hover); box-shadow:var(--glass-shadow-hover); color:var(--text-primary); }
+        .back-btn:active { transform:scale(0.92); transition:transform 0.1s; background:rgba(255,255,255, calc(var(--glass-opacity) + 0.26)); }
+
+        .setting-slider { -webkit-appearance:none; width:100%; height:6px; border-radius:3px; background:rgba(255,255,255,0.35); outline:none; margin:8px 0 14px; }
+        .setting-slider::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--theme); cursor:pointer; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.12); transition:all calc(0.35s / var(--anim-speed)); }
+        .setting-slider::-webkit-slider-thumb:hover { transform:scale(1.15); box-shadow:0 0 0 8px var(--theme-glow), 0 2px 8px rgba(0,0,0,0.15); }
+
+        .preset-btns { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+        .preset-btn { flex:1; min-width:50px; padding:10px 6px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; font-size:0.8rem; font-weight:500; color:var(--text-secondary); transition:all calc(0.35s / var(--anim-speed)); text-align:center; box-shadow:var(--glass-shadow); white-space:nowrap; }
+        .preset-btn:hover { background:rgba(255,255,255, calc(var(--glass-opacity) + 0.12)); border-color:var(--glass-border-hover); color:var(--text-primary); }
+        .preset-btn.active { background:var(--theme); color:#fff; border-color:var(--theme); box-shadow:0 0 0 4px var(--theme-glow); }
+
+        .reset-btn { width:100%; padding:12px; border-radius:14px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; font-size:0.85rem; font-weight:600; color:#ef4444; transition:all calc(0.35s / var(--anim-speed)); text-align:center; margin-top:8px; box-shadow:var(--glass-shadow); }
+        .reset-btn:hover { background:rgba(239,68,68,0.18); border-color:rgba(239,68,68,0.5); }
+        .reset-btn:active { transform:scale(0.96); }
+
+        .bottom-nav { display:flex; justify-content:space-around; align-items:center; padding:7px 14px 15px; background:rgba(255,255,255,var(--glass-opacity)); backdrop-filter:blur(28px) saturate(170%); -webkit-backdrop-filter:blur(28px) saturate(170%); border-top:1px solid var(--glass-border); position:relative; z-index:10; width:100%; box-shadow:0 -5px 20px rgba(0,0,0,0.025), 0 -1px 0 rgba(255,255,255,0.28) inset; transition:background 0.3s; }
+        .nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; background:transparent; border:none; cursor:pointer; padding:7px 17px; border-radius:17px; transition:all calc(0.35s / var(--anim-speed)); color:var(--text-muted); font-size:0.66rem; font-weight:500; letter-spacing:0.02em; -webkit-tap-highlight-color:transparent; outline:none; position:relative; min-width:56px; overflow:hidden; }
+        .nav-btn svg { width:21px; height:21px; transition:all calc(0.35s / var(--anim-speed)); opacity:0.48; }
+        .nav-btn.nav-active { color:var(--theme); font-weight:600; background:rgba(255,255,255,0.28); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:17px; box-shadow:0 1px 7px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.5); }
+        .nav-btn.nav-active svg { opacity:1; color:var(--theme); filter:drop-shadow(0 0 7px var(--theme-glow)); }
+        .nav-btn.nav-active::after { content:''; position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:22px; height:3px; border-radius:6px; background:var(--theme); box-shadow:0 0 10px var(--theme-glow); transition:all calc(0.35s / var(--anim-speed)); }
+        .nav-btn:active { transform:scale(0.92); transition:transform 0.1s; }
+
+        .ripple-effect { position:absolute; border-radius:50%; background:rgba(255,255,255,0.7); transform:scale(0); animation:ripple 0.55s ease-out forwards; pointer-events:none; z-index:5; }
+        @keyframes ripple { to { transform:scale(4.5); opacity:0; } }
+
+        .tab-content { display:none; }
+        .tab-content.show { display:block; }
+        .sub-page { display:none; }
+        .sub-page.show { display:block; }
+
+        /* 折叠面板样式 */
+        .slider-toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; padding: 6px 0; user-select: none;
+        }
+        .slider-toggle .settings-section-label { margin-top:0; margin-bottom:0; }
+        .toggle-arrow {
+            font-size: 0.7rem; color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+        .slider-toggle.open .toggle-arrow { transform: rotate(180deg); }
+        .slider-group {
+            display: none;
+            animation: fadeDown 0.3s ease;
+        }
+        .slider-group.show { display: block; }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-heading: #f5f5f5;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+    <div class="app-shell">
+        <div class="main-scroll" id="mainScroll">
+            <!-- 首页 -->
+            <div id="tab-home" class="tab-content">
+                <div class="home-hero fade-item" style="animation-delay:0.04s">
+                    <div class="hero-badge"><span class="dot"></span> Flicer · Ver26.5-Pro</div>
+                    <h1>Welcome</h1>
+                    <p class="hero-subtitle">探索更多可能</p>
+                    <div class="hero-accent"></div>
+                    <div class="hero-accent2"></div>
+                </div>
+                <div class="menu-row">
+                    <a href="abb.html" class="menu-card fade-item" style="animation-delay:0.1s"><div class="menu-left"><div class="menu-index" style="background:rgba(236,253,245,0.6);color:#10B981;">01</div><span class="menu-title">版本更新说明</span></div><svg class="menu-arrow-svg" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+                    <a href="win.html" class="menu-card fade-item" style="animation-delay:0.15s"><div class="menu-left"><div class="menu-index" style="background:rgba(239,246,255,0.6);color:#3B82F6;">02</div><span class="menu-title">各版本更新日志</span></div><svg class="menu-arrow-svg" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+                    <a href="tg.html" class="menu-card fade-item" style="animation-delay:0.2s"><div class="menu-left"><div class="menu-index" style="background:rgba(255,251,235,0.6);color:#F59E0B;">03</div><span class="menu-title">使用说明</span></div><svg class="menu-arrow-svg" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+                    <a href="thank.html" class="menu-card fade-item" style="animation-delay:0.25s"><div class="menu-left"><div class="menu-index" style="background:rgba(245,243,255,0.6);color:#8B5CF6;">04</div><span class="menu-title">鸣谢</span></div><svg class="menu-arrow-svg" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+                </div>
+            </div>
+
+            <!-- 发现 -->
+            <div id="tab-discover" class="tab-content">
+                <div class="discover-header fade-item" style="animation-delay:0.04s"><h2>发现</h2><p class="tagline">实用工具集</p></div>
+                <div class="discover-grid">
+                    <a href="aigen3.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(236,253,245,0.6);color:#10B981;">GL</div><span class="tile-label">GLM-4-Flash</span><span class="tile-desc">智谱AI模型</span></a>
+                    <a href="aigen2.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(239,246,255,0.6);color:#3B82F6;">DV</div><span class="tile-label">DeepSeek-V4</span><span class="tile-desc">深度求索模型</span></a>
+                    <a href="api.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(255,247,237,0.6);color:#F97316;">🐾</div><span class="tile-label">吸猫吸狗</span><span class="tile-desc">萌宠图库</span></a>
+                    <a href="a1.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(254,242,242,0.6);color:#EF4444;">🎲</div><span class="tile-label">随机选择器</span><span class="tile-desc">决策助手</span></a>
+                    <a href="a2.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(245,243,255,0.6);color:#8B5CF6;">⇄</div><span class="tile-label">进制转换器</span><span class="tile-desc">数值计算</span></a>
+                    <a href="aigen.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(253,242,248,0.6);color:#EC4899;">AI</div><span class="tile-label">AI图片生成</span><span class="tile-desc">创意绘图</span></a>
+                    <a href="time.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(240,253,244,0.6);color:#22c55e;">⏳</div><span class="tile-label">倒计时</span><span class="tile-desc">时间管理</span></a>
+                    <a href="qr.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(248,250,252,0.6);color:#64748b;">QR</div><span class="tile-label">二维码生成</span><span class="tile-desc">快速编码</span></a>
+                    <!-- 新增工具 -->
+                    <a href="add.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(245,243,255,0.6);color:#8B5CF6;">∑</div><span class="tile-label">LaTeX公式</span><span class="tile-desc">公式预览</span></a>
+                    <a href="aee.html" class="discover-tile fade-item"><div class="tile-shape" style="background:rgba(253,242,248,0.6);color:#EC4899;">🎨</div><span class="tile-label">颜色选择器</span><span class="tile-desc">HEX/RGB/HSL</span></a>
+                </div>
+            </div>
+
+            <!-- 我的 -->
+            <div id="tab-profile" class="tab-content">
+                <div class="profile-section fade-item" style="animation-delay:0.04s">
+                    <div class="avatar-container" id="avatarContainer" onclick="document.getElementById('avatarUpload').click()" title="点击更换头像">
+                        <div class="avatar-inner"><img src="https://picsum.photos/200/200?random=3" alt="头像" id="avatarImg"></div>
+                    </div>
+                    <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                    <input type="text" class="edit-name" value="用户名" id="username" aria-label="用户名">
+                    <p class="profile-hint">轻触修改用户名 · 点击头像更换</p>
+                </div>
+                <div class="profile-links">
+                    <a href="about.html" class="profile-link-card fade-item"><span class="link-label">关于</span><svg class="link-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+                    <div onclick="openSubPage('page-settings')" class="profile-link-card fade-item"><span class="link-label">设置</span><svg class="link-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+                </div>
+            </div>
+
+            <!-- 设置 -->
+            <div id="page-settings" class="sub-page">
+                <div class="settings-header fade-item" style="animation-delay:0.04s"><h2>主题设置</h2></div>
+                <div class="fade-item" style="animation-delay:0.08s;margin-top:12px;">
+                    <p class="settings-section-label">选择主题色</p>
+                    <div class="theme-dots-row">
+                        <button onclick="setTheme('#10B981','#a7f3d0')" class="theme-dot-btn active-ring" style="background:#10B981;"></button>
+                        <button onclick="setTheme('#4F46E5','#c7d2fe')" class="theme-dot-btn" style="background:#4F46E5;"></button>
+                        <button onclick="setTheme('#EF4444','#fecaca')" class="theme-dot-btn" style="background:#EF4444;"></button>
+                        <button onclick="setTheme('#F59E0B','#fde68a')" class="theme-dot-btn" style="background:#F59E0B;"></button>
+                        <button onclick="setTheme('#8B5CF6','#ddd6fe')" class="theme-dot-btn" style="background:#8B5CF6;"></button>
+                        <button onclick="setTheme('#EC4899','#fbcfe8')" class="theme-dot-btn" style="background:#EC4899;"></button>
+                        <div id="colorPreviewBall" title="当前主题色"></div>
+                    </div>
+                </div>
+
+                <div class="fade-item" style="animation-delay:0.14s;margin-top:12px;">
+                    <p class="settings-section-label">自定义背景</p>
+                    <div class="preset-btns" id="bgPresets">
+                        <button class="preset-btn active" data-bg="default" onclick="setBgPreset('default', this)">默认渐变</button>
+                        <button class="preset-btn" data-bg="sunrise" onclick="setBgPreset('sunrise', this)">晨曦暖阳</button>
+                        <button class="preset-btn" data-bg="ocean" onclick="setBgPreset('ocean', this)">海洋微风</button>
+                        <button class="preset-btn" data-bg="lavender" onclick="setBgPreset('lavender', this)">薰衣草田</button>
+                    </div>
+                    <button class="preset-btn" data-bg="custom" onclick="document.getElementById('bgImageUpload').click()" style="width:100%;margin-top:6px;"> 自定义图片</button>
+                    <input type="file" id="bgImageUpload" accept="image/*" style="display:none;" onchange="handleBgUpload(event)">
+                </div>
+
+                <!-- 背景模糊 (可展开) -->
+                <div class="fade-item" style="animation-delay:0.16s;margin-top:12px;">
+                    <div class="slider-toggle" onclick="toggleSlider('bgBlurSliderGroup', this)">
+                        <p class="settings-section-label">背景模糊 <span id="bgBlurVal">0px</span></p>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div class="slider-group" id="bgBlurSliderGroup">
+                        <input type="range" class="setting-slider" id="bgBlurSlider" min="0" max="20" value="0" step="1" oninput="updateBgBlur(this.value)">
+                    </div>
+                </div>
+
+                <!-- 字体颜色 (不变) -->
+                <div class="fade-item" style="animation-delay:0.20s;margin-top:12px;">
+                    <p class="settings-section-label">字体颜色</p>
+                    <div class="preset-btns" id="textColorPresets">
+                        <button class="preset-btn active" data-mode="auto" onclick="setTextColorMode('auto', this)">自动</button>
+                        <button class="preset-btn" data-mode="dark" onclick="setTextColorMode('dark', this)">深色</button>
+                        <button class="preset-btn" data-mode="light" onclick="setTextColorMode('light', this)">浅色</button>
+                    </div>
+                </div>
+
+                <!-- 毛玻璃模糊强度 (可展开) -->
+                <div class="fade-item" style="animation-delay:0.24s;margin-top:12px;">
+                    <div class="slider-toggle" onclick="toggleSlider('glassBlurSliderGroup', this)">
+                        <p class="settings-section-label">毛玻璃模糊强度 <span id="blurVal">20px</span></p>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div class="slider-group" id="glassBlurSliderGroup">
+                        <input type="range" class="setting-slider" id="blurSlider" min="8" max="40" value="20" step="2" oninput="updateBlur(this.value)">
+                    </div>
+                </div>
+
+                <!-- 界面透明度 (可展开) -->
+                <div class="fade-item" style="animation-delay:0.28s;">
+                    <div class="slider-toggle" onclick="toggleSlider('opacitySliderGroup', this)">
+                        <p class="settings-section-label">界面透明度 <span id="opacityVal">10%</span></p>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div class="slider-group" id="opacitySliderGroup">
+                        <div class="preset-btns" id="opacityPresets">
+                            <button class="preset-btn" data-opacity="5" onclick="setOpacityPreset(5, this)">5%</button>
+                            <button class="preset-btn active" data-opacity="10" onclick="setOpacityPreset(10, this)">10%</button>
+                            <button class="preset-btn" data-opacity="25" onclick="setOpacityPreset(25, this)">25%</button>
+                            <button class="preset-btn" data-opacity="50" onclick="setOpacityPreset(50, this)">50%</button>
+                            <button class="preset-btn" data-opacity="80" onclick="setOpacityPreset(80, this)">80%</button>
+                            <button class="preset-btn" data-opacity="100" onclick="setOpacityPreset(100, this)">100%</button>
+                        </div>
+                        <input type="range" class="setting-slider" id="opacitySlider" min="0" max="100" value="10" step="1" oninput="updateOpacity(this.value)">
+                    </div>
+                </div>
+
+                <div class="fade-item" style="animation-delay:0.32s;">
+                    <p class="settings-section-label">头像设置</p>
+                    <button onclick="resetAvatar()" style="width:100%;padding:10px;border-radius:14px;border:1px solid var(--glass-border);background:rgba(255,255,255,var(--glass-opacity));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-size:0.82rem;color:var(--text-secondary);transition:all calc(0.35s / var(--anim-speed));box-shadow:var(--glass-shadow);"> 恢复默认头像</button>
+                </div>
+
+                <div class="fade-item" style="animation-delay:0.36s;margin-top:14px;">
+                    <p class="settings-section-label">危险操作</p>
+                    <button class="reset-btn" onclick="resetAllSettings()"> 重置所有设置</button>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <button onclick="goBackNav()" class="back-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        返回
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/></svg><span>首页</span></button>
+            <button class="nav-btn" data-tab="discover"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>发现</span></button>
+            <button class="nav-btn" data-tab="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>我的</span></button>
+        </nav>
+    </div>
+
+    <script>
+        let locate = localStorage.getItem('lastNavTab') || "home";
+
+        document.querySelectorAll(".nav-btn").forEach(btn => {
+            btn.addEventListener("click", function(e) {
+                locate = this.dataset.tab;
+                localStorage.setItem('lastNavTab', locate);
+                document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("nav-active"));
+                this.classList.add("nav-active");
+                document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("show"));
+                document.querySelectorAll(".sub-page").forEach(s => s.classList.remove("show"));
+                const targetTab = document.getElementById("tab-" + locate);
+                if (targetTab) targetTab.classList.add("show");
+                document.getElementById('mainScroll').scrollTop = 0;
+            });
+            btn.addEventListener("pointerdown", function(e) {
+                e.stopPropagation();
+                const existing = this.querySelector(".ripple-effect");
+                if (existing) existing.remove();
+                const ripple = document.createElement("span");
+                ripple.className = "ripple-effect";
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${e.clientX - rect.left - size/2}px`;
+                ripple.style.top = `${e.clientY - rect.top - size/2}px`;
+                this.appendChild(ripple);
+                ripple.addEventListener("animationend", () => ripple.remove());
+            });
+        });
+
+        function toggleSlider(groupId, toggleEl) {
+            const group = document.getElementById(groupId);
+            if (group) {
+                group.classList.toggle('show');
+                toggleEl.classList.toggle('open');
+            }
+        }
+
+        function openSubPage(id) {
+            document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("show"));
+            document.querySelectorAll(".sub-page").forEach(s => s.classList.remove("show"));
+            const subPage = document.getElementById(id);
+            if (subPage) subPage.classList.add("show");
+            document.getElementById('mainScroll').scrollTop = 0;
+        }
+
+        function goBackNav() {
+            document.querySelectorAll(".sub-page").forEach(s => s.classList.remove("show"));
+            document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("show"));
+            const targetTab = document.getElementById("tab-" + locate);
+            if (targetTab) targetTab.classList.add("show");
+            document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("nav-active"));
+            const activeBtn = document.querySelector(`.nav-btn[data-tab="${locate}"]`);
+            if (activeBtn) activeBtn.classList.add("nav-active");
+            document.getElementById('mainScroll').scrollTop = 0;
+        }
+
+        function setTheme(color, light) {
+            document.documentElement.style.setProperty("--theme", color);
+            document.documentElement.style.setProperty("--theme-light", light);
+            document.documentElement.style.setProperty("--theme-glow", `rgba(${hexToRgbStr(color)},0.28)`);
+            localStorage.setItem("themeColor", color);
+            localStorage.setItem("themeLight", light);
+            document.querySelectorAll('.theme-dot-btn').forEach(d => {
+                d.classList.remove('active-ring');
+                if (d.style.background.toLowerCase() === color.toLowerCase()) d.classList.add('active-ring');
+            });
+        }
+
+        function hexToRgbStr(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1],16)},${parseInt(result[2],16)},${parseInt(result[3],16)}` : '16,185,129';
+        }
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const size = 200;
+                    canvas.width = size; canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    const minDim = Math.min(img.width, img.height);
+                    ctx.drawImage(img, (img.width-minDim)/2, (img.height-minDim)/2, minDim, minDim, 0, 0, size, size);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                    try { localStorage.setItem('userAvatar', dataUrl); } catch(e) {}
+                    document.getElementById('avatarImg').src = dataUrl;
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function resetAvatar() {
+            localStorage.removeItem('userAvatar');
+            document.getElementById('avatarImg').src = 'https://picsum.photos/200/200?random=3';
+        }
+
+        function updateBlur(val) {
+            document.documentElement.style.setProperty('--blur-amount', val + 'px');
+            document.getElementById('blurVal').textContent = val + 'px';
+            localStorage.setItem('blurAmount', val);
+        }
+
+        function updateOpacity(val) {
+            const opacity = val / 100;
+            document.documentElement.style.setProperty('--glass-opacity', opacity);
+            document.getElementById('opacityVal').textContent = val + '%';
+            document.querySelectorAll('#opacityPresets .preset-btn').forEach(b => {
+                b.classList.remove('active');
+                if (parseInt(b.dataset.opacity) === parseInt(val)) b.classList.add('active');
+            });
+            localStorage.setItem('glassOpacity', val);
+        }
+
+        function setOpacityPreset(val, btn) {
+            updateOpacity(val);
+            document.querySelectorAll('#opacityPresets .preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+        function updateBgBlur(val) {
+            document.documentElement.style.setProperty('--bg-blur', val + 'px');
+            document.getElementById('bgBlurVal').textContent = val + 'px';
+            localStorage.setItem('bgBlurAmount', val);
+        }
+
+        const bgPresets = {
+            default: 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)',
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+        let currentBgType = localStorage.getItem('customBgType') || 'default';
+        let currentBgValue = localStorage.getItem('customBgValue') || 'default';
+
+        function applyBackground() {
+            if (currentBgType === 'image' && currentBgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${currentBgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else if (currentBgType === 'preset' && bgPresets[currentBgValue]) {
+                bgBlurLayer.style.backgroundImage = bgPresets[currentBgValue];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                bgBlurLayer.style.backgroundImage = bgPresets['default'];
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+            applyTextColor(textColorMode);
+        }
+
+        function updateBgUI() {
+            document.querySelectorAll('#bgPresets .preset-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.dataset.bg === currentBgValue) b.classList.add('active');
+            });
+        }
+
+        function setBgPreset(val, btn) {
+            currentBgType = 'preset';
+            currentBgValue = val;
+            localStorage.setItem('customBgType', 'preset');
+            localStorage.setItem('customBgValue', val);
+            localStorage.setItem('customBgIsDark', '0');
+            applyBackground();
+            updateBgUI();
+        }
+
+        function handleBgUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxW = 1200;
+                    let w = img.width, h = img.height;
+                    if (w > maxW) { h = (h/w)*maxW; w = maxW; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    let brightness = 200;
+                    try {
+                        const imageData = ctx.getImageData(0, 0, Math.min(w,100), Math.min(h,100));
+                        let total = 0, count = 0;
+                        const pixels = imageData.data;
+                        const step = Math.max(1, Math.floor(pixels.length / 2000));
+                        for (let i = 0; i < pixels.length; i += step * 4) {
+                            const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+                            total += 0.299 * r + 0.587 * g + 0.114 * b;
+                            count++;
+                        }
+                        brightness = total / count;
+                    } catch(e) {}
+                    localStorage.setItem('customBgIsDark', brightness < 100 ? '1' : '0');
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    currentBgType = 'image';
+                    currentBgValue = dataUrl;
+                    try {
+                        localStorage.setItem('customBgType', 'image');
+                        localStorage.setItem('customBgValue', dataUrl);
+                    } catch(e) { alert('图片过大，仅本次生效'); }
+                    applyBackground();
+                    updateBgUI();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        let textColorMode = localStorage.getItem('textColorMode') || 'auto';
+
+        function applyTextColor(mode) {
+            const body = document.body;
+            body.classList.remove('body-text-light');
+            if (mode === 'light') {
+                body.classList.add('body-text-light');
+            } else if (mode === 'auto') {
+                const isDarkBg = localStorage.getItem('customBgIsDark') === '1';
+                if (isDarkBg) body.classList.add('body-text-light');
+            }
+        }
+
+        function setTextColorMode(mode, btn) {
+            textColorMode = mode;
+            localStorage.setItem('textColorMode', mode);
+            applyTextColor(mode);
+            document.querySelectorAll('#textColorPresets .preset-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.dataset.mode === mode) b.classList.add('active');
+            });
+        }
+
+        function updateTextColorUI() {
+            document.querySelectorAll('#textColorPresets .preset-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.dataset.mode === textColorMode) b.classList.add('active');
+            });
+        }
+
+        applyBackground();
+        updateBgUI();
+        applyTextColor(textColorMode);
+        updateTextColorUI();
+
+        function resetAllSettings() {
+            if (confirm('确定要重置所有设置吗？')) {
+                ['themeColor','themeLight','userName','userAvatar','blurAmount','glassOpacity','customBgType','customBgValue','customBgIsDark','textColorMode','bgBlurAmount','lastNavTab'].forEach(k => localStorage.removeItem(k));
+                location.reload();
+            }
+        }
+
+        window.onload = function() {
+            const navBtn = document.querySelector(`.nav-btn[data-tab="${locate}"]`);
+            if (navBtn) navBtn.click();
+            let c = localStorage.getItem("themeColor") || "#10B981";
+            let l = localStorage.getItem("themeLight") || "#a7f3d0";
+            setTheme(c, l);
+
+            const savedAvatar = localStorage.getItem('userAvatar');
+            if (savedAvatar) document.getElementById('avatarImg').src = savedAvatar;
+
+            const nameInp = document.getElementById("username");
+            if (nameInp) {
+                const savedName = localStorage.getItem("userName");
+                if (savedName) nameInp.value = savedName;
+                nameInp.addEventListener("blur", () => localStorage.setItem("userName", nameInp.value.trim() || "用户名"));
+            }
+
+            const savedBlur = localStorage.getItem('blurAmount') || '20';
+            document.getElementById('blurSlider').value = savedBlur;
+            updateBlur(savedBlur);
+
+            const savedOpacity = localStorage.getItem('glassOpacity') || '10';
+            document.getElementById('opacitySlider').value = savedOpacity;
+            updateOpacity(savedOpacity);
+
+            const savedBgBlur = localStorage.getItem('bgBlurAmount') || '0';
+            document.getElementById('bgBlurSlider').value = savedBgBlur;
+            updateBgBlur(savedBgBlur);
+
+            textColorMode = localStorage.getItem('textColorMode') || 'auto';
+            applyTextColor(textColorMode);
+            updateTextColorUI();
+        };
+    </script>
+</body>
+</html>

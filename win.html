@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>版本更新日志</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.28);
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-bg-hover: rgba(255, 255, 255, 0.25);
+            --glass-bg-active: rgba(255, 255, 255, 0.38);
+            --glass-border: rgba(255, 255, 255, 0.28);
+            --glass-border-hover: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+            --glass-shadow-hover: 0 10px 34px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+            --glass-shadow-active: 0 2px 6px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+            --radius: 18px;
+            --radius-lg: 22px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-muted: #9a9085;
+            --bg-blur: 0px;
+            --dropdown-bg: rgba(255, 255, 255, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 16px 40px;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-blur-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2; pointer-events: none;
+            background-size: cover; background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        body::before {
+            content: ''; position: fixed;
+            top: -28%; left: -18%; width: 68vw; height: 68vw; max-width: 560px; max-height: 560px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            animation: ambientGlow1 10s ease-in-out infinite;
+        }
+        body::after {
+            content: ''; position: fixed;
+            bottom: -22%; right: -16%; width: 56vw; height: 56vw; max-width: 460px; max-height: 460px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 68%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            animation: ambientGlow2 13s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.65; }
+            33% { transform: translate(50px,-30px) scale(1.16); opacity:0.88; }
+            66% { transform: translate(-28px,22px) scale(0.86); opacity:0.48; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.48; }
+            40% { transform: translate(-40px,28px) scale(1.2); opacity:0.72; }
+            75% { transform: translate(22px,-18px) scale(0.82); opacity:0.35; }
+        }
+
+        .log-container {
+            width: 100%; max-width: 520px; position: relative; z-index: 2;
+            display: flex; flex-direction: column; gap: 20px;
+            margin-top: 10px;
+            animation: fadeUp 0.8s cubic-bezier(0.22,0.61,0.36,1) forwards;
+            opacity: 0; transform: translateY(20px);
+        }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .log-title {
+            font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em;
+            text-align: center; color: var(--text-primary);
+            margin-bottom: 0; line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.5);
+        }
+
+        .custom-dropdown { width: 100%; position: relative; }
+        .dropdown-head {
+            width: 100%; padding: 16px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border: 1px solid var(--glass-border); border-radius: var(--radius);
+            font-size: 0.95rem; font-weight: 500; color: var(--text-primary);
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            transition: all var(--transition); box-shadow: var(--glass-shadow);
+            position: relative; overflow: hidden;
+        }
+        .dropdown-head::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
+            border-radius: var(--radius) var(--radius) 0 0;
+            pointer-events: none; transition: opacity var(--transition);
+        }
+        .dropdown-head:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); box-shadow: var(--glass-shadow-hover); }
+        .dropdown-head:active { transform: scale(0.98); background: var(--glass-bg-active); box-shadow: var(--glass-shadow-active); }
+        .dropdown-head svg { width: 18px; height: 18px; stroke: var(--text-secondary); transition: transform 0.3s ease; flex-shrink: 0; }
+        .dropdown-head.active svg { transform: rotate(180deg); }
+
+        .dropdown-list {
+            position: absolute; top: calc(100% + 8px); left: 0; width: 100%;
+            background: var(--dropdown-bg);
+            backdrop-filter: blur(26px) saturate(180%);
+            -webkit-backdrop-filter: blur(26px) saturate(180%);
+            border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.2) inset;
+            overflow: hidden; opacity: 0; pointer-events: none;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.22,0.61,0.36,1); z-index: 999;
+        }
+        .dropdown-list.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .dropdown-item {
+            width: 100%; padding: 14px 20px; font-size: 0.9rem; font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer; transition: all 0.25s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            position: relative; background: transparent;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.35);
+            color: var(--text-primary);
+            padding-left: 26px;
+        }
+        .dropdown-item.active {
+            background: rgba(255,255,255,0.4);
+            color: var(--theme);
+            font-weight: 600;
+            box-shadow: inset 3px 0 0 var(--theme);
+        }
+
+        .log-show-box {
+            width: 100%; padding: 24px;
+            background: rgba(30,30,35,0.65);
+            backdrop-filter: blur(24px) saturate(120%);
+            -webkit-backdrop-filter: blur(24px) saturate(120%);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-lg);
+            color: #f0f0f0; font-size: 0.9rem; line-height: 2;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.08) inset;
+            white-space: pre-wrap; word-break: break-word;
+            min-height: 100px; display: none; opacity: 0; transform: translateY(12px);
+        }
+        .log-show-box.visible { display: block; animation: showBox 0.5s cubic-bezier(0.2,1,0.25,1) forwards; }
+        @keyframes showBox {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); box-shadow: 0 15px 35px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.12) inset, 0 0 20px rgba(16,185,129,0.1); }
+        }
+
+        @media (max-width: 480px) {
+            .log-title { font-size: 1.8rem; }
+            .dropdown-head { padding: 14px 16px; font-size: 0.9rem; }
+            .log-show-box { padding: 18px; font-size: 0.82rem; }
+            body { padding: 30px 12px 40px; }
+        }
+
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+    <div class="log-container">
+        <h1 class="log-title">版本更新日志</h1>
+        <div class="custom-dropdown">
+            <div class="dropdown-head" id="dropHead">
+                <span id="dropText">请选择对应版本</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="dropdown-list" id="dropList">
+                <div class="dropdown-item" data-key="v100">Ver1.0.0(初始版本)</div>
+                <div class="dropdown-item" data-key="v110">Ver1.1.0</div>
+                <div class="dropdown-item" data-key="v120">Ver1.2.0</div>
+                <div class="dropdown-item" data-key="v121">Ver1.2.1</div>
+                <div class="dropdown-item" data-key="v122">Ver1.2.2</div>
+                <div class="dropdown-item" data-key="v150">Ver1.5.0(重要更新)</div>
+                <div class="dropdown-item" data-key="v151">Ver1.5.1</div>
+                <div class="dropdown-item" data-key="v2500">Ver25.0.0(年度重要更新)</div>
+                <div class="dropdown-item" data-key="v2501">Ver25.0.1</div>
+                <div class="dropdown-item" data-key="v2502">Ver25.0.2</div>
+                <div class="dropdown-item" data-key="v2503">Ver25.0.3</div>
+                <div class="dropdown-item" data-key="v261">Ver26.1(年度重要更新)</div>
+                <div class="dropdown-item" data-key="v262">Ver26.2</div>
+                <div class="dropdown-item" data-key="v263">Ver26.3(重要更新)</div>
+            <div class="dropdown-item" data-key="v264">Ver26.4</div>
+            </div>
+        </div>
+        <div class="log-show-box" id="logBox"></div>
+    </div>
+
+    <script>
+        const dropHead=document.getElementById('dropHead'),dropList=document.getElementById('dropList'),dropText=document.getElementById('dropText'),logBox=document.getElementById('logBox'),items=document.querySelectorAll('.dropdown-item');
+        const logData={
+            v100:`1. 搭建基础页面整体框架\n2. 添加基础功能模块\n3. 加入丝滑页面入场动画`,
+            v110:`1. 全新网页化视觉重构\n2. 优化页面动画\n3. 全机型移动端适配优化`,
+            v120:`1. 采用现代简约UI设计\n2. 微调交互过渡动画\n3. 修复小屏显示兼容问题`,
+            v121:`1. 优化界面细节间距\n2. 提升切换动画流畅度\n3. 优化文字排版可读性`,
+            v122:`1. 调整了配色体系\n2. 优化加载动画表现\n3. 新增随机选择器，进制转换器`,
+            v150:`1. 重构底层布局结构\n2. 升级现代浅色系风格\n3. 新增随机吸猫吸狗`,
+            v151:`1. 修复底栏显示bug\n2. 优化下拉选择交互\n3. 提升页面加载速度`,
+            v2500:`1. 全新改版，视觉风格优化，全新UI界面\n2. 统一现代设计语言\n3. 新增AI对话，AI图片生成功能，AI赋能，更进一步`,
+            v2501:`1. 微调文字层级大小\n2. 优化内容框渐变质感\n3. 新增倒计时工具`,
+            v2502:`1. 优化PAD端触控体验\n2. 调整内边距排版布局\n3. 新增DeepSeek-V3调用工具`,
+            v2503:`1. 已部署至Github，可通过链接访问\n2. 新增推广页`,
+            v261:`1. UI再次焕新，全新浅绿主题色，更自然\n2. 仿原生设计，交互体验提升\n3. 新增设置选项，可进行主题颜色设置，更随心\n4. DeepSeek全新接入V4-Flash接口，对话更高效\n5. DeepSeek-V4对话页全新升级，新增流式输出，自定义APIkey，夜间模式，对话记录一键清除等功能，对话体验再升级\n6. 新增二维码生成工具`,
+            v262:`1. 新增全新高斯模糊主题，仿真玻璃材质\n2. 动画效果优化`,
+            v263:`1. 优化各功能页面的材质，统一为玻璃材质\n2. 优化了版本更新说明页面\n3. 支持自定义头像`,
+            v264:`1. 优化DeepSeek-V4代码功能，支持预览，支持latex公式渲染\n2.本次更新采用双版本方案，26.4(免费版)与26.4-Pro(付费版)双版本。Pro版本可提供更优的个性化方案与更强的API接口调用`
+            
+      
+        };
+        dropHead.addEventListener('click',(e)=>{ e.stopPropagation(); dropList.classList.toggle('show'); dropHead.classList.toggle('active'); });
+        items.forEach(item=>{ item.addEventListener('click',()=>{ items.forEach(i=>i.classList.remove('active')); item.classList.add('active'); dropText.innerText=item.innerText; const k=item.dataset.key; if(logData[k]){ logBox.innerText=logData[k]; logBox.classList.remove('visible'); void logBox.offsetWidth; logBox.classList.add('visible'); } dropList.classList.remove('show'); dropHead.classList.remove('active'); }); });
+        document.addEventListener('click',(e)=>{ if(!document.querySelector('.custom-dropdown').contains(e.target)){ dropList.classList.remove('show'); dropHead.classList.remove('active'); } });
+        dropList.addEventListener('click',(e)=>{ e.stopPropagation(); });
+
+        // 同步主页设置
+        const bgBlurLayer=document.getElementById('bgBlurLayer');
+        const bgPresets={ default:'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)', sunrise:'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', ocean:'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)', lavender:'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' };
+        function applySharedSettings(){
+            const c=localStorage.getItem('themeColor')||'#10B981',rgb=hexToRgb(c);
+            document.documentElement.style.setProperty('--theme',c);
+            document.documentElement.style.setProperty('--theme-glow',`rgba(${rgb.r},${rgb.g},${rgb.b},0.28)`);
+            const op=(parseFloat(localStorage.getItem('glassOpacity'))||10)/100;
+            document.documentElement.style.setProperty('--glass-bg',`rgba(255,255,255,${op})`);
+            document.documentElement.style.setProperty('--glass-bg-hover',`rgba(255,255,255,${op+0.13})`);
+            document.documentElement.style.setProperty('--glass-bg-active',`rgba(255,255,255,${op+0.26})`);
+            // 下拉背景跟随透明度（稍微更实一些确保可读性）
+            document.documentElement.style.setProperty('--dropdown-bg', `rgba(255,255,255,${Math.min(1, op*2.5)})`);
+            document.documentElement.style.setProperty('--blur-amount',(localStorage.getItem('blurAmount')||'20')+'px');
+            document.documentElement.style.setProperty('--bg-blur',(localStorage.getItem('bgBlurAmount')||'0')+'px');
+            const bt=localStorage.getItem('customBgType')||'default',bv=localStorage.getItem('customBgValue')||'default';
+            if(bt==='image'&&bv){ bgBlurLayer.style.backgroundImage=`url(${bv})`; bgBlurLayer.style.backgroundSize='cover'; bgBlurLayer.style.backgroundPosition='center'; bgBlurLayer.style.backgroundAttachment='fixed'; document.body.style.background=''; }
+            else if(bt==='preset'&&bgPresets[bv]){ bgBlurLayer.style.backgroundImage=bgPresets[bv]; bgBlurLayer.style.backgroundSize='cover'; bgBlurLayer.style.backgroundPosition='center'; bgBlurLayer.style.backgroundAttachment='fixed'; document.body.style.background=''; }
+            else { bgBlurLayer.style.backgroundImage=bgPresets['default']; bgBlurLayer.style.backgroundSize='cover'; bgBlurLayer.style.backgroundPosition='center'; bgBlurLayer.style.backgroundAttachment='fixed'; document.body.style.background=''; }
+            applyTextColor();
+        }
+        function applyTextColor(){
+            const m=localStorage.getItem('textColorMode')||'auto',cust=localStorage.getItem('customTextColor');
+            document.body.classList.remove('body-text-light');
+            if(cust){ document.documentElement.style.setProperty('--text-primary',cust); document.documentElement.style.setProperty('--text-secondary',cust); document.documentElement.style.setProperty('--text-muted',cust); }
+            else if(m==='light') document.body.classList.add('body-text-light');
+            else if(m==='auto'){ if(localStorage.getItem('customBgIsDark')==='1') document.body.classList.add('body-text-light'); }
+        }
+        function hexToRgb(h){ const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:16,g:185,b:129}; }
+        applySharedSettings();
+    </script>
+</body>
+</html>

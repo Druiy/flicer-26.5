@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>倒计时</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.28);
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-bg-hover: rgba(255, 255, 255, 0.22);
+            --glass-bg-active: rgba(255, 255, 255, 0.36);
+            --glass-border: rgba(255, 255, 255, 0.26);
+            --glass-border-hover: rgba(255, 255, 255, 0.48);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.15) inset, 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+            --glass-shadow-hover: 0 10px 34px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(255, 255, 255, 0.25) inset, 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+            --glass-shadow-active: 0 2px 6px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+            --radius: 18px;
+            --radius-lg: 22px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 20px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-muted: #9a9085;
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --bg-blur: 0px;
+        }
+
+        body.theme-dark {
+            --theme-glow: rgba(16, 185, 129, 0.2);
+            --glass-bg: rgba(30, 30, 35, 0.45);
+            --glass-bg-hover: rgba(40, 40, 48, 0.6);
+            --glass-bg-active: rgba(50, 50, 58, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-hover: rgba(255, 255, 255, 0.22);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 1px 0 rgba(255, 255, 255, 0.15) inset;
+            --glass-shadow-hover: 0 10px 34px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 1px 0 rgba(255, 255, 255, 0.2) inset;
+            --glass-shadow-active: 0 2px 6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #8a8278;
+            --input-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em; color: var(--text-primary);
+            position: relative; overflow-x: hidden;
+            transition: background 0.3s ease;
+        }
+        body.theme-dark {
+            background: linear-gradient(155deg, #1a1c22 0%, #21232b 20%, #1e2028 45%, #262830 70%, #181a20 100%);
+        }
+
+        .bg-blur-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2; pointer-events: none;
+            background-size: cover; background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        body::before {
+            content: ''; position: fixed; top: -28%; left: -18%;
+            width: 68vw; height: 68vw; max-width: 560px; max-height: 560px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            animation: ambientGlow1 10s ease-in-out infinite;
+        }
+        body::after {
+            content: ''; position: fixed; bottom: -22%; right: -16%;
+            width: 56vw; height: 56vw; max-width: 460px; max-height: 460px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 68%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            animation: ambientGlow2 13s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.65; }
+            33% { transform: translate(50px,-30px) scale(1.16); opacity:0.88; }
+            66% { transform: translate(-28px,22px) scale(0.86); opacity:0.48; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.48; }
+            40% { transform: translate(-40px,28px) scale(1.2); opacity:0.72; }
+            75% { transform: translate(22px,-18px) scale(0.82); opacity:0.35; }
+        }
+
+        .container {
+            width: 100%; max-width: 480px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+            padding: 28px 22px; box-shadow: var(--glass-shadow);
+            display: flex; flex-direction: column; gap: 20px;
+            position: relative; z-index: 2;
+            animation: fadeUp 0.7s cubic-bezier(0.22,0.61,0.36,1) forwards;
+            opacity: 0; transform: translateY(16px);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); }
+        .theme-btn {
+            background: var(--glass-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); color: var(--text-secondary);
+            font-size: 0.8rem; padding: 8px 16px; border-radius: 22px; cursor: pointer;
+            transition: all var(--transition); box-shadow: var(--glass-shadow);
+        }
+        .theme-btn:hover { background: var(--glass-bg-hover); }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.78rem; color: var(--text-secondary); }
+        input { padding: 14px 16px; border: 1px solid var(--glass-border); border-radius: var(--radius); background: var(--input-bg); backdrop-filter: blur(10px); color: var(--text-primary); font-size: 0.95rem; outline: none; transition: all var(--transition); }
+        input:focus { border-color: var(--glass-border-hover); box-shadow: 0 0 0 4px var(--theme-glow); background: var(--glass-bg-hover); }
+
+        .countdown { text-align: center; margin: 8px 0; }
+        .timer { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+        .time-box { width: 68px; height: 68px; background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: var(--glass-shadow); }
+        .time-num { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); }
+        .time-label { font-size: 0.65rem; color: var(--text-muted); }
+        .status { font-size: 0.88rem; color: var(--text-secondary); }
+
+        .btn-group { display: flex; gap: 12px; margin-top: 4px; }
+        .btn { flex: 1; padding: 14px 18px; border: 1px solid var(--glass-border); border-radius: var(--radius); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all var(--transition); background: var(--glass-bg); backdrop-filter: blur(14px); color: var(--text-primary); box-shadow: var(--glass-shadow); }
+        .btn-primary { background: var(--theme); border-color: var(--theme); color: white; }
+        .btn-primary:hover { background: #0ea572; }
+        .btn:disabled { opacity: 0.45; pointer-events: none; }
+
+        @media (max-width: 400px) { .time-box { width: 56px; height: 56px; } .time-num { font-size: 1.5rem; } }
+
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+    <div class="container">
+        <div class="header">
+            <h1>倒计时</h1>
+            <button class="theme-btn" id="themeBtn">切换夜间</button>
+        </div>
+        <div class="input-group"><label>倒计时名称</label><input type="text" id="title" placeholder="例如：放假、生日"></div>
+        <div class="input-group"><label>目标日期</label><input type="date" id="targetDate"></div>
+        <div class="input-group"><label>目标时间</label><input type="time" id="targetTime"></div>
+        <div class="countdown">
+            <div class="timer">
+                <div class="time-box"><div class="time-num" id="days">00</div><div class="time-label">天</div></div>
+                <div class="time-box"><div class="time-num" id="hours">00</div><div class="time-label">时</div></div>
+                <div class="time-box"><div class="time-num" id="minutes">00</div><div class="time-label">分</div></div>
+                <div class="time-box"><div class="time-num" id="seconds">00</div><div class="time-label">秒</div></div>
+            </div>
+            <div class="status" id="status">设置日期后开始倒计时</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="startBtn" disabled>开始</button>
+            <button class="btn btn-secondary" id="resetBtn" disabled>重置</button>
+        </div>
+    </div>
+
+    <script>
+        const titleInput=document.getElementById('title'),targetDateInput=document.getElementById('targetDate'),targetTimeInput=document.getElementById('targetTime');
+        const startBtn=document.getElementById('startBtn'),resetBtn=document.getElementById('resetBtn'),statusText=document.getElementById('status');
+        const daysEl=document.getElementById('days'),hoursEl=document.getElementById('hours'),minutesEl=document.getElementById('minutes'),secondsEl=document.getElementById('seconds');
+        const themeBtn=document.getElementById('themeBtn');
+        let countdownInterval,isActive=false,targetDateTime;
+
+        function loadFromStorage(){
+            const d=JSON.parse(localStorage.getItem('countdownSettings')||'null');
+            if(d){ titleInput.value=d.title||''; targetDateInput.value=d.targetDate||new Date().toISOString().split('T')[0]; targetTimeInput.value=d.targetTime||'00:00'; if(d.isActive){ targetDateTime=new Date(`${d.targetDate}T${d.targetTime}`); isActive=true; updateBtnStatus(); calculateCountdown(); countdownInterval=setInterval(calculateCountdown,1000); } }
+            else { targetDateInput.value=new Date().toISOString().split('T')[0]; targetTimeInput.value='00:00'; }
+        }
+        function saveToStorage(){ localStorage.setItem('countdownSettings',JSON.stringify({title:titleInput.value.trim(),targetDate:targetDateInput.value,targetTime:targetTimeInput.value,isActive})); }
+        function updateBtnStatus(){ const v=titleInput.value.trim()&&targetDateInput.value&&targetTimeInput.value; startBtn.disabled=!v||isActive; resetBtn.disabled=!isActive; }
+        function formatNum(n){ return n.toString().padStart(2,'0'); }
+        function calculateCountdown(){
+            const diff=targetDateTime-new Date();
+            if(diff<=0){ clearInterval(countdownInterval); isActive=false; saveToStorage(); updateBtnStatus(); statusText.textContent=`🎉 ${titleInput.value.trim()} 已到达！`; daysEl.textContent='00'; hoursEl.textContent='00'; minutesEl.textContent='00'; secondsEl.textContent='00'; return; }
+            daysEl.textContent=formatNum(Math.floor(diff/(1000*60*60*24)));
+            hoursEl.textContent=formatNum(Math.floor((diff%(1000*60*60*24))/(1000*60*60)));
+            minutesEl.textContent=formatNum(Math.floor((diff%(1000*60*60))/(1000*60)));
+            secondsEl.textContent=formatNum(Math.floor((diff%(1000*60))/1000));
+            statusText.textContent=`距离 ${titleInput.value.trim()} 还有`;
+        }
+        function startCountdown(){ if(isActive) return; targetDateTime=new Date(`${targetDateInput.value}T${targetTimeInput.value}`); isActive=true; saveToStorage(); updateBtnStatus(); calculateCountdown(); countdownInterval=setInterval(calculateCountdown,1000); }
+        function resetCountdown(){ clearInterval(countdownInterval); isActive=false; saveToStorage(); updateBtnStatus(); statusText.textContent='设置日期后开始倒计时'; daysEl.textContent='00'; hoursEl.textContent='00'; minutesEl.textContent='00'; secondsEl.textContent='00'; }
+        function toggleTheme(){
+            document.body.classList.toggle('theme-dark');
+            themeBtn.textContent=document.body.classList.contains('theme-dark')?'切换日间':'切换夜间';
+            localStorage.setItem('countdownTheme',document.body.classList.contains('theme-dark')?'dark':'light');
+            applySharedSettings();
+        }
+
+        titleInput.addEventListener('input',()=>{ updateBtnStatus(); saveToStorage(); });
+        targetDateInput.addEventListener('change',()=>{ updateBtnStatus(); saveToStorage(); });
+        targetTimeInput.addEventListener('change',()=>{ updateBtnStatus(); saveToStorage(); });
+        startBtn.addEventListener('click',startCountdown);
+        resetBtn.addEventListener('click',resetCountdown);
+        themeBtn.addEventListener('click',toggleTheme);
+        loadFromStorage();
+        if(localStorage.getItem('countdownTheme')==='dark'){ document.body.classList.add('theme-dark'); themeBtn.textContent='切换日间'; }
+        updateBtnStatus();
+
+        // ========== 同步主页设置（夜间模式修复） ==========
+        const bgBlurLayer=document.getElementById('bgBlurLayer');
+        const defaultLightBg='linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)';
+        const defaultDarkBg='linear-gradient(155deg, #1a1c22 0%, #21232b 20%, #1e2028 45%, #262830 70%, #181a20 100%)';
+        const bgPresets={ default:defaultLightBg, sunrise:'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', ocean:'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)', lavender:'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' };
+
+        function applySharedSettings(){
+            const themeColor=localStorage.getItem('themeColor')||'#10B981',rgb=hexToRgb(themeColor);
+            document.documentElement.style.setProperty('--theme',themeColor);
+            document.documentElement.style.setProperty('--theme-glow',`rgba(${rgb.r},${rgb.g},${rgb.b},0.28)`);
+            const op=(parseFloat(localStorage.getItem('glassOpacity'))||10)/100;
+            document.documentElement.style.setProperty('--glass-bg',`rgba(255,255,255,${op})`);
+            document.documentElement.style.setProperty('--glass-bg-hover',`rgba(255,255,255,${op+0.12})`);
+            document.documentElement.style.setProperty('--input-bg',`rgba(255,255,255,${op+0.05})`);
+            document.documentElement.style.setProperty('--blur-amount',(localStorage.getItem('blurAmount')||'20')+'px');
+            document.documentElement.style.setProperty('--bg-blur',(localStorage.getItem('bgBlurAmount')||'0')+'px');
+
+            const bgType=localStorage.getItem('customBgType')||'default',bgValue=localStorage.getItem('customBgValue')||'default';
+            const isDarkMode=document.body.classList.contains('theme-dark');
+
+            if(bgType==='image'&&bgValue){ bgBlurLayer.style.backgroundImage=`url(${bgValue})`; bgBlurLayer.style.backgroundSize='cover'; bgBlurLayer.style.backgroundPosition='center'; bgBlurLayer.style.backgroundAttachment='fixed'; document.body.style.background=''; }
+            else {
+                let bgToUse=defaultLightBg;
+                if(bgValue==='default'){ bgToUse=isDarkMode?defaultDarkBg:defaultLightBg; }
+                else if(bgPresets[bgValue]){ bgToUse=bgPresets[bgValue]; }
+                bgBlurLayer.style.backgroundImage=bgToUse;
+                bgBlurLayer.style.backgroundSize='cover'; bgBlurLayer.style.backgroundPosition='center';
+                bgBlurLayer.style.backgroundAttachment='fixed'; document.body.style.background='';
+            }
+
+            if(!isDarkMode) applyTextColor();
+        }
+
+        function applyTextColor(){
+            const m=localStorage.getItem('textColorMode')||'auto',cust=localStorage.getItem('customTextColor');
+            document.body.classList.remove('body-text-light');
+            if(cust){ document.documentElement.style.setProperty('--text-primary',cust); document.documentElement.style.setProperty('--text-secondary',cust); document.documentElement.style.setProperty('--text-muted',cust); }
+            else if(m==='light') document.body.classList.add('body-text-light');
+            else if(m==='auto'){ if(localStorage.getItem('customBgIsDark')==='1') document.body.classList.add('body-text-light'); }
+        }
+
+        function hexToRgb(h){ const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:16,g:185,b:129}; }
+        applySharedSettings();
+    </script>
+</body>
+</html>

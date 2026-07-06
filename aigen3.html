@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>GLM-4-Flash</title>
+    <style>
+        :root {
+            --theme: #10B981;
+            --theme-glow: rgba(16, 185, 129, 0.25);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-bg-hover: rgba(255, 255, 255, 0.18);
+            --glass-border: rgba(255, 255, 255, 0.22);
+            --glass-border-hover: rgba(255, 255, 255, 0.45);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1) inset, 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+            --radius: 18px;
+            --radius-sm: 14px;
+            --transition: 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            --blur-amount: 18px;
+            --saturate-amount: 150%;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c544a;
+            --text-muted: #9a9085;
+            --user-bg: rgba(16, 185, 129, 0.8);
+            --ai-bg: rgba(255, 255, 255, 0.15);
+            --input-bg: rgba(255, 255, 255, 0.2);
+            --bg-blur: 0px;
+        }
+
+        .dark {
+            --theme-glow: rgba(16, 185, 129, 0.15);
+            --glass-bg: rgba(30, 30, 35, 0.4);
+            --glass-bg-hover: rgba(50, 50, 58, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-hover: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 2px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+            --text-primary: #f0f0f0;
+            --text-secondary: #b0a89e;
+            --text-muted: #8a8278;
+            --user-bg: rgba(16, 185, 129, 0.7);
+            --ai-bg: rgba(255, 255, 255, 0.08);
+            --input-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%);
+            background-attachment: fixed;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s;
+        }
+
+        .bg-blur-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(var(--bg-blur));
+            transition: filter 0.3s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle at 40% 35%, var(--theme-glow) 0%, transparent 72%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow1 12s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -25%;
+            right: -18%;
+            width: 60vw;
+            height: 60vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle at 55% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientGlow2 14s ease-in-out infinite;
+        }
+        @keyframes ambientGlow1 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.6; }
+            33% { transform: translate(60px,-40px) scale(1.2); opacity:0.85; }
+            66% { transform: translate(-30px,30px) scale(0.85); opacity:0.45; }
+        }
+        @keyframes ambientGlow2 {
+            0%,100% { transform: translate(0,0) scale(1); opacity:0.4; }
+            40% { transform: translate(-50px,35px) scale(1.25); opacity:0.7; }
+            75% { transform: translate(30px,-25px) scale(0.8); opacity:0.3; }
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border-bottom: 1px solid var(--glass-border);
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 99; box-shadow: var(--glass-shadow);
+        }
+        .model-name { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+        .top-btns { display: flex; gap: 8px; }
+        .top-bar button {
+            padding: 7px 14px; border-radius: 22px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            color: var(--text-secondary); cursor: pointer;
+            font-size: 0.8rem; font-weight: 500;
+            transition: all var(--transition); box-shadow: var(--glass-shadow); outline: none;
+        }
+        .top-bar button:hover { background: var(--glass-bg-hover); border-color: var(--glass-border-hover); color: var(--text-primary); }
+        .top-bar button:active { transform: scale(0.94); }
+
+        .chat {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            padding: 80px 16px 120px; max-width: 700px; margin: 0 auto; width: 100%;
+            scroll-behavior: smooth; scrollbar-width: none; position: relative; z-index: 2;
+        }
+        .chat::-webkit-scrollbar { width: 0; height: 0; }
+
+        .msg {
+            margin: 12px 0; padding: 14px 18px; border-radius: var(--radius-sm);
+            max-width: 80%; font-size: 0.95rem; line-height: 1.6;
+            word-wrap: break-word; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            animation: fadeInMsg 0.3s ease forwards; position: relative; clear: both;
+        }
+        @keyframes fadeInMsg { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .user { background: var(--user-bg); color: #fff; margin-left: auto; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.1); float: right; border-bottom-right-radius: 4px; }
+        .ai { background: var(--ai-bg); border: 1px solid var(--glass-border); color: var(--text-primary); box-shadow: var(--glass-shadow); float: left; border-bottom-left-radius: 4px; }
+        .loading { opacity: 0.7; }
+        .chat::after { content: ""; display: table; clear: both; }
+
+        .input-area {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 12px 16px 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(var(--saturate-amount));
+            border-top: 1px solid var(--glass-border);
+            z-index: 99; box-shadow: 0 -4px 20px rgba(0,0,0,0.05), 0 -1px 0 rgba(255,255,255,0.2) inset;
+        }
+        .input-group { max-width: 700px; margin: 0 auto; display: flex; gap: 10px; }
+        #txt { flex: 1; height: 48px; padding: 0 18px; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); font-size: 0.95rem; background: var(--input-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text-primary); outline: none; transition: all var(--transition); }
+        #txt:focus { border-color: var(--glass-border-hover); box-shadow: 0 0 0 4px var(--theme-glow); background: var(--glass-bg-hover); }
+        #send { width: 90px; height: 48px; background: var(--theme); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; letter-spacing: 0.02em; transition: all var(--transition); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #send:hover { background: #0ea572; box-shadow: 0 6px 18px rgba(0,0,0,0.15), 0 0 20px var(--theme-glow); }
+        #send:active { transform: scale(0.95); }
+
+        .confirm-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .confirm-mask.show { display: flex; }
+        .confirm-box { width: 85%; max-width: 320px; background: var(--glass-bg); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 28px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: fadeInMsg 0.3s ease; }
+        .confirm-box p { font-size: 1rem; color: var(--text-primary); margin-bottom: 24px; font-weight: 500; }
+        .confirm-btns { display: flex; gap: 12px; }
+        .confirm-btns button { flex: 1; padding: 10px; border-radius: 24px; border: 1px solid var(--glass-border); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all var(--transition); background: var(--glass-bg); color: var(--text-primary); }
+        .btn-cancel:hover { background: var(--glass-bg-hover); }
+        .btn-ok { background: #ef4444 !important; color: white !important; border: none !important; }
+        .btn-ok:hover { background: #dc2626 !important; }
+
+        @media (max-width: 480px) {
+            .chat { padding: 80px 12px 120px; }
+            .msg { max-width: 85%; }
+            .top-bar { padding: 10px 12px; }
+            .input-area { padding: 10px 12px 20px; }
+        }
+
+        .body-text-light {
+            --text-primary: #f0f0f0;
+            --text-secondary: #c0b8b0;
+            --text-muted: #a0988d;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blur-layer" id="bgBlurLayer"></div>
+
+    <div class="top-bar">
+        <div class="model-name">GLM-4-Flash</div>
+        <div class="top-btns">
+            <button id="btnClear">删除对话</button>
+            <button id="btnMode">夜间模式</button>
+        </div>
+    </div>
+
+    <div class="confirm-mask" id="confirmMask">
+        <div class="confirm-box">
+            <p>确定要清空所有聊天记录吗？</p>
+            <div class="confirm-btns">
+                <button class="btn-cancel" id="cancelConfirm">取消</button>
+                <button class="btn-ok" id="okConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="input-area">
+        <div class="input-group">
+            <input type="text" id="txt" placeholder="在这里输入内容..." autocomplete="off">
+            <button id="send">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat');
+        const inputTxt = document.getElementById('txt');
+        const confirmMask = document.getElementById('confirmMask');
+
+        const GLM_KEY = "c7e30d4addd6469fb113982e2eda18c3.dAfQevVDHfaYcTzL";
+        const modelName = "glm-4-flash";
+        const apiUrl = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+
+        let isDark = localStorage.getItem('darkMode') === '1';
+        let chatHistory = JSON.parse(localStorage.getItem('chatListGLM')) || [];
+        let streamDom = null;
+
+        if (isDark) {
+            document.body.classList.add('dark');
+            document.getElementById('btnMode').innerText = "日间模式";
+        }
+
+        function renderChat() {
+            chatBox.innerHTML = "";
+            if (chatHistory.length === 0) {
+                addMsgDom("你好！我是GLM-4-Flash，有什么可以帮助你的吗？", "ai");
+                return;
+            }
+            chatHistory.forEach(item => addMsgDom(item.text, item.type));
+            scrollBottom();
+        }
+
+        function addMsgDom(text, type) {
+            let div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerText = text;
+            chatBox.appendChild(div);
+            scrollBottom();
+            return div;
+        }
+
+        function scrollBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+        function saveChat() { localStorage.setItem('chatListGLM', JSON.stringify(chatHistory)); }
+
+        async function sendMsg() {
+            let text = inputTxt.value.trim();
+            if (!text) return;
+            chatHistory.push({ type: "user", text });
+            saveChat();
+            renderChat();
+            inputTxt.value = "";
+            streamDom = addMsgDom("", "ai loading");
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + GLM_KEY
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: [{ role: "user", content: text }],
+                        temperature: 0.7,
+                        stream: true
+                    })
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split("\n").filter(line => line.startsWith("data:"));
+                    for (let line of lines) {
+                        let jsonStr = line.replace("data:", "").trim();
+                        if (!jsonStr || jsonStr === "[DONE]") continue;
+                        try {
+                            let json = JSON.parse(jsonStr);
+                            let content = json.choices?.[0]?.delta?.content || "";
+                            if (content) { fullText += content; streamDom.innerText = fullText; scrollBottom(); }
+                        } catch (e) {}
+                    }
+                }
+                streamDom.classList.remove('loading');
+                chatHistory.push({ type: "ai", text: fullText });
+                saveChat();
+            } catch (e) {
+                streamDom.innerText = "请求失败，请检查Key或网络";
+                streamDom.classList.remove('loading');
+                chatHistory.push({ type: "ai", text: streamDom.innerText });
+                saveChat();
+            }
+        }
+
+        document.getElementById('btnClear').onclick = () => confirmMask.classList.add('show');
+        document.getElementById('cancelConfirm').onclick = () => confirmMask.classList.remove('show');
+        document.getElementById('okConfirm').onclick = () => {
+            chatHistory = [];
+            saveChat();
+            renderChat();
+            confirmMask.classList.remove('show');
+        };
+
+        document.getElementById('btnMode').onclick = function() {
+            isDark = !isDark;
+            if (isDark) {
+                document.body.classList.add('dark');
+                this.innerText = "日间模式";
+                localStorage.setItem('darkMode', '1');
+            } else {
+                document.body.classList.remove('dark');
+                this.innerText = "夜间模式";
+                localStorage.setItem('darkMode', '0');
+            }
+            applySharedSettings();
+        };
+
+        inputTxt.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+        document.getElementById('send').onclick = sendMsg;
+
+        renderChat();
+
+        // ========== 同步主页设置 ==========
+        const bgBlurLayer = document.getElementById('bgBlurLayer');
+        const defaultLightBg = 'linear-gradient(155deg, #ece7df 0%, #f4f0ea 20%, #efeae3 45%, #f7f3ed 70%, #e8e3da 100%)';
+        const defaultDarkBg = 'linear-gradient(155deg, #1a1c22 0%, #21232b 20%, #1e2028 45%, #262830 70%, #181a20 100%)';
+        const bgPresets = {
+            default: defaultLightBg,
+            sunrise: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            ocean: 'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+            lavender: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)'
+        };
+
+        function applySharedSettings() {
+            const themeColor = localStorage.getItem('themeColor') || '#10B981';
+            const rgb = hexToRgb(themeColor);
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`);
+            document.documentElement.style.setProperty('--user-bg', `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`);
+
+            const glassOpacity = parseFloat(localStorage.getItem('glassOpacity')) || 10;
+            const opacityValue = glassOpacity / 100;
+            document.documentElement.style.setProperty('--glass-bg', `rgba(255, 255, 255, ${opacityValue})`);
+            document.documentElement.style.setProperty('--glass-bg-hover', `rgba(255, 255, 255, ${opacityValue + 0.12})`);
+            document.documentElement.style.setProperty('--ai-bg', `rgba(255, 255, 255, ${opacityValue + 0.07})`);
+            document.documentElement.style.setProperty('--input-bg', `rgba(255, 255, 255, ${opacityValue + 0.12})`);
+
+            const blurAmount = localStorage.getItem('blurAmount') || '18';
+            document.documentElement.style.setProperty('--blur-amount', blurAmount + 'px');
+
+            const bgBlurAmount = localStorage.getItem('bgBlurAmount') || '0';
+            document.documentElement.style.setProperty('--bg-blur', bgBlurAmount + 'px');
+
+            const bgType = localStorage.getItem('customBgType') || 'default';
+            const bgValue = localStorage.getItem('customBgValue') || 'default';
+            const isDarkMode = document.body.classList.contains('dark');
+
+            if (bgType === 'image' && bgValue) {
+                bgBlurLayer.style.backgroundImage = `url(${bgValue})`;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            } else {
+                // 对于默认渐变，根据暗色模式切换
+                let bgToUse = defaultLightBg;
+                if (bgValue === 'default') {
+                    bgToUse = isDarkMode ? defaultDarkBg : defaultLightBg;
+                } else if (bgPresets[bgValue]) {
+                    bgToUse = bgPresets[bgValue];
+                }
+                bgBlurLayer.style.backgroundImage = bgToUse;
+                bgBlurLayer.style.backgroundSize = 'cover';
+                bgBlurLayer.style.backgroundPosition = 'center';
+                bgBlurLayer.style.backgroundAttachment = 'fixed';
+                document.body.style.background = '';
+            }
+
+            if (!isDarkMode) applyTextColor();
+        }
+
+        function applyTextColor() {
+            const textColorMode = localStorage.getItem('textColorMode') || 'auto';
+            const customTextColor = localStorage.getItem('customTextColor');
+            const body = document.body;
+            body.classList.remove('body-text-light');
+
+            if (customTextColor) {
+                document.documentElement.style.setProperty('--text-primary', customTextColor);
+                document.documentElement.style.setProperty('--text-secondary', customTextColor);
+                document.documentElement.style.setProperty('--text-muted', customTextColor);
+            } else if (textColorMode === 'light') {
+                body.classList.add('body-text-light');
+            } else if (textColorMode === 'auto') {
+                if (localStorage.getItem('customBgIsDark') === '1') body.classList.add('body-text-light');
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 16, g: 185, b: 129 };
+        }
+
+        applySharedSettings();
+    </script>
+</body>
+</html>
